@@ -1,4 +1,4 @@
-#EasyRide - Smart Campus Transportation for MBU Students
+EasyRide - Smart Campus Transportation for MBU Students
 
 EasyRide: Smart Campus Transportation
 A web interface for MBU students to book or offer rides around campus, built purely with HTML, CSS, and JavaScript.
@@ -29,5 +29,9 @@ This project is built entirely using fundamental web technologies:
 HTML: Structures the content of the web page.
 
 CSS: Styles the interface, including layout, colors, and component appearances (inspired by modern UI principles).
+
+JavaScript: Handles user interactions like form submission, ride filtering, dynamic theming, and displaying notifications.
+
+
 
 JavaScript: Handles user interactions like form submission, ride filtering, dynamic theming, and displaying notifications.
