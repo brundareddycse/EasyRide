@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - Driver Dashboard</title>
+    <meta name="description" content="Dashboard for EasyRide drivers to track earnings, hours, and ride history." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        /* Light text colors */
+        :root[data-theme='morning'],
+        :root[data-theme='afternoon'] {
+            --foreground: 222.2 84% 4.9%;
+            --card-foreground: 222.2 84% 4.9%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted-foreground: 215 20.2% 65.1%;
+        }
+
+        /* Dark text colors */
+        :root[data-theme='evening'],
+        :root[data-theme='night'] {
+            --foreground: 210 40% 98%;
+            --card-foreground: 210 40% 98%;
+            --secondary-foreground: 210 40% 98%;
+            --muted-foreground: 215 20.2% 65.1%;
+        }
+        
+        /* Morning theme colors */
+        [data-theme='morning'] {
+            --background: 210 40% 98%; --card: 210 40% 96.1%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --muted: 210 40% 96.1%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 222.2 84% 4.9%;
+        }
+        /* Afternoon theme colors */
+        [data-theme='afternoon'] {
+            --background: 20 14.3% 95.9%; --card: 16 12.3% 93.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 4.8% 95.9%; --muted: 240 4.8% 95.9%; --border: 240 5.9% 90%; --input: 240 5.9% 90%; --ring: 240 5.9% 10%;
+        }
+        /* Evening theme colors */
+        [data-theme='evening'] {
+            --background: 240 10% 3.9%; --card: 240 10% 8.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 3.7% 15.9%; --muted: 240 3.7% 15.9%; --border: 240 3.7% 15.9%; --input: 240 3.7% 15.9%; --ring: 346.8 77.2% 49.8%;
+        }
+        /* Night theme colors */
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --card: 222.2 84% 6.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --muted: 217.2 32.6% 17.5%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+
+        /* * GENERAL STYLING */
+        *, *::before, *::after { box-sizing: border-box; }
+        body, html {
+            height: 100%; margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background)); color: hsl(var(--foreground));
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh; padding: 2rem 1rem;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 1rem;
+            margin: auto;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .header .user-info {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .header .user-info img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 1rem;
+            border: 2px solid hsl(var(--primary));
+            object-fit: cover;
+        }
+        .header .user-info h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .header .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stats-card {
+            background-color: hsl(var(--card));
+            padding: 1rem;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stats-card h3 {
+            font-size: 0.875rem;
+            margin: 0 0 0.5rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .stats-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: hsl(var(--primary));
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+        }
+
+        .targets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background-color: hsl(var(--card));
+            border-radius: var(--radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .target-item {
+            text-align: center;
+        }
+        .target-item h4 {
+            font-size: 0.9rem;
+            margin: 0 0 0.25rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .target-item .value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: hsl(var(--foreground));
+        }
+        .target-item .value.primary {
+            color: hsl(var(--primary));
+        }
+
+        .graph-card {
+            background-color: hsl(var(--card));
+            padding: 1rem;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        #earnings-chart {
+            width: 100%;
+            height: 200px;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: hsl(var(--card));
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .history-item .details {
+            flex: 1;
+        }
+        .history-item .details h4 {
+            font-size: 1rem;
+            margin: 0 0 0.25rem;
+        }
+        .history-item .details p {
+            font-size: 0.8rem;
+            margin: 0;
+            color: hsl(var(--muted-foreground));
+        }
+        .history-item .amount {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: hsl(var(--primary));
+        }
+
+        .theme-toggle-btn { position: fixed; top: 1rem; right: 1rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background-color: hsl(var(--card)); color: hsl(var(--foreground)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); cursor: pointer; transition: background-color 0.2s, transform 0.2s; }
+        .theme-toggle-btn:hover { background-color: hsl(var(--secondary)); }
+        .theme-toggle-btn:active { transform: scale(0.95); }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background-color: hsl(var(--card));
+            padding: 2rem;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 500px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+            position: relative;
+        }
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: hsl(var(--muted-foreground));
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 1.5rem;
+            text-align: center;
+        }
+        .modal-body label {
+            display: block;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .modal-body input, .modal-body select {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            background-color: hsl(var(--input));
+            color: hsl(var(--foreground));
+            transition: border-color 0.2s;
+        }
+        .modal-body input:read-only {
+            background-color: hsl(var(--background));
+            cursor: default;
+        }
+        .modal-body input:focus, .modal-body select:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--foreground));
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        /* Advertisement Styles */
+        .advertisement {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            background-color: hsl(var(--card));
+            border: 1px dashed hsl(var(--muted-foreground));
+            text-align: center;
+            color: hsl(var(--foreground));
+        }
+        .advertisement h4 {
+            margin: 0 0 0.5rem;
+            font-size: 1rem;
+            color: hsl(var(--primary));
+            font-weight: 600;
+        }
+        .advertisement p {
+            margin: 0;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        /* Toggle Switch Styles */
+        .duty-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            font-weight: 500;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .toggle-switch-container {
+            display: inline-block;
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: hsl(var(--secondary));
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: hsl(var(--foreground));
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch-input:checked + .toggle-switch-slider {
+            background-color: hsl(var(--primary));
+        }
+
+        .toggle-switch-input:focus + .toggle-switch-slider {
+            box-shadow: 0 0 1px hsl(var(--primary));
+        }
+
+        .toggle-switch-input:checked + .toggle-switch-slider:before {
+            transform: translateX(20px);
+            background-color: hsl(var(--primary-foreground));
+        }
+        
+        /* Notification Modal specific styles */
+        .notification-content {
+            max-width: 400px;
+            text-align: center;
+        }
+        .notification-content h3 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: hsl(var(--primary));
+            margin-bottom: 1rem;
+        }
+        .notification-content p {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .notification-content .ride-details {
+            text-align: left;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: hsl(var(--background));
+            border-radius: var(--radius);
+        }
+        .notification-content .ride-details span {
+            font-weight: 600;
+        }
+
+        /* Reusable message box */
+        .message-box-content {
+            max-width: 350px;
+            text-align: center;
+        }
+
+        /* Floating Chat Button */
+        .chat-fab {
+            position: fixed;
+            bottom: 5.5rem; /* Above the footer navigation */
+            right: 1.5rem;
+            width: 56px;
+            height: 56px;
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 101; /* Above footer, below modals */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            text-decoration: none;
+        }
+        .chat-fab:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+        }
+        .chat-fab svg {
+            width: 28px;
+            height: 28px;
+        }
+        /* SPR Pool Styles for Driver */
+.pool-card {
+    background-color: hsl(var(--card));
+    padding: 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border-left: 4px solid hsl(var(--primary));
+}
+.pool-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+.pool-card-header h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+.pool-card-header .price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: hsl(var(--primary));
+}
+.pool-card-details {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 1rem;
+}
+.accept-pool-btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-weight: 600;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info" id="profile-info-btn">
+               <img class="max-h-96 w-full" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22128%22%20height%3D%22128%22%20viewBox%3D%220%200%2064%2064%22%20aria-hidden%3D%22true%22%20role%3D%22img%22%3E%0A%20%20%3C!--%20Head%20outline%20--%3E%0A%20%20%3Ccircle%20cx%3D%2232%22%20cy%3D%2220%22%20r%3D%2210%22%20fill%3D%22none%22%20stroke%3D%22%23DC143C%22%20stroke-width%3D%223%22%3E%3C%2Fcircle%3E%0A%20%20%3C!--%20Shoulders%20%2F%20torso%20outline%20--%3E%0A%20%20%3Cpath%20d%3D%22M16%2052c0-8.837%207.163-16%2016-16s16%207.163%2016%2016v2H16v-2z%22%20fill%3D%22none%22%20stroke%3D%22%23DC143C%22%20stroke-width%3D%223%22%3E%3C%2Fpath%3E%0A%3C%2Fsvg%3E%0A">
+                <h2>Hello, Driver!</h2>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="redeem-btn">Redeem</button>
+            </div>
+        </div>
+
+        <!-- New: On/Off Duty Toggle -->
+        <div class="duty-toggle">
+            <span id="duty-status">Off-Duty</span>
+            <label class="toggle-switch-container">
+                <input type="checkbox" class="toggle-switch-input" id="duty-toggle">
+                <span class="toggle-switch-slider"></span>
+            </label>
+        </div>
+
+        
+
+        <div class="stats-grid">
+            <div class="stats-card">
+                <h3>Total Earnings</h3>
+                <p class="value" id="total-earnings">₹0.00</p>
+            </div>
+            <div class="stats-card">
+                <h3>Received Amount</h3>
+                <p class="value" id="received-amount">₹0.00</p>
+            </div>
+            <div class="stats-card">
+                <h3>Hours on Rides</h3>
+                <p class="value" id="hours-on-rides">0</p>
+            </div>
+            <div class="stats-card">
+                <h3>Bookings</h3>
+                <p class="value" id="bookings-completed">0</p>
+            </div>
+        </div>
+
+        <h3 class="section-title">Daily Targets & Bonuses</h3>
+        <div class="targets-grid">
+            <div class="target-item">
+                <h4>Extra Fee (Night)</h4>
+                <p class="value primary" id="night-extra-fee">₹15.00</p>
+            </div>
+            <div class="target-item">
+                <h4>Daily Bookings Target</h4>
+                <p class="value" id="daily-bookings-target">0</p>
+            </div>
+            <div class="target-item">
+                <h4>Extra Bookings</h4>
+                <p class="value" id="extra-bookings">0</p>
+            </div>
+        </div>
+
+        <h3 class="section-title">Daily Earnings</h3>
+        <div class="graph-card">
+            <canvas id="earnings-chart"></canvas>
+        </div>
+
+        <h3 class="section-title">Ride History</h3>
+        <ul class="history-list" id="ride-history-list">
+            <!-- Ride history items will be populated here by JavaScript -->
+        </ul>
+    </div>
+    
+    <button id="theme-toggle" class="theme-toggle-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+
+    <!-- Driver Details Modal -->
+    <div class="modal-overlay" id="details-modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="modal-close-btn">&times;</button>
+            <h3 class="modal-title">Driver Details</h3>
+            <div class="modal-body">
+                <label for="driver-name">Name</label>
+                <input type="text" id="driver-name" readonly>
+
+                <label for="driver-address">Address</label>
+                <input type="text" id="driver-address" readonly>
+                
+                <label for="driver-license">Driving License No.</label>
+                <input type="text" id="driver-license" readonly>
+                
+                <label for="driver-phone">Phone Number</label>
+                <input type="tel" id="driver-phone" readonly>
+
+                <label for="driver-email">Email</label>
+                <input type="email" id="driver-email" readonly>
+
+                <label for="license-validity">License Validity</label>
+                <input type="text" id="license-validity" readonly>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="back-btn">Back</button>
+                <button class="btn btn-primary" id="edit-details-btn">Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Redeem Earnings Modal -->
+    <div class="modal-overlay" id="redeem-modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="redeem-modal-close-btn">&times;</button>
+            <h3 class="modal-title">Redeem Earnings</h3>
+            <div class="modal-body">
+                <p>Current Redeemable Balance: <span id="redeemable-balance">₹0.00</span></p>
+                <label for="redeem-amount">Amount to Redeem</label>
+                <input type="number" id="redeem-amount" placeholder="Enter amount">
+
+                <label for="select-account">Select Account</label>
+                <select id="select-account">
+                    <!-- Bank accounts will be populated by JS -->
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="redeem-cancel-btn">Cancel</button>
+                <button class="btn btn-primary" id="redeem-now-btn">Redeem Now</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- New: Ride Request Notification Modal -->
+    <div class="modal-overlay" id="notification-modal">
+        <div class="modal-content notification-content">
+            <h3 class="modal-title">New Ride Request!</h3>
+            <div class="ride-details">
+                <p>Customer: <span id="notification-customer-name"></span></p>
+                <p>Phone: <span id="notification-phone-number"></span></p>
+                <p>Price: <span id="notification-price"></span></p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="reject-ride-btn">Reject</button>
+                <a href="driverride.html"><button class="btn btn-primary" id="accept-ride-btn">Accept</button></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- New: Generic Message Box Modal -->
+    <div class="modal-overlay" id="message-box-modal">
+        <div class="modal-content message-box-content">
+            <button class="modal-close-btn" id="message-box-close-btn">&times;</button>
+            <p id="message-box-text"></p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="message-box-ok-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="section-title">Available Ride Pools</h3>
+<div id="spr-pools-list-driver">
+    <!-- Driver pool list will be populated here -->
+     <div class="pool-card" id="no-driver-pools-msg">
+        <p style="color: hsl(var(--muted-foreground)); text-align: center;">No ride pools available for acceptance right now.</p>
+    </div>
+</div>
+
+
+    <!-- Advertisement Section -->
+    <div class="advertisement">
+        <h4>Advertisement</h4>
+        <p>Drive more, earn more! Sign up for our premium navigation service and get a 10% bonus on all rides for your first month. </p>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <a href="chat.html" class="chat-fab" aria-label="Open AI Assistant">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    </a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const uiElements = {
+                themeToggle: document.getElementById('theme-toggle'),
+                totalEarnings: document.getElementById('total-earnings'),
+                receivedAmount: document.getElementById('received-amount'),
+                hoursOnRides: document.getElementById('hours-on-rides'),
+                bookingsCompleted: document.getElementById('bookings-completed'),
+                nightExtraFee: document.getElementById('night-extra-fee'),
+                dailyBookingsTarget: document.getElementById('daily-bookings-target'),
+                extraBookings: document.getElementById('extra-bookings'),
+                earningsChart: document.getElementById('earnings-chart'),
+                rideHistoryList: document.getElementById('ride-history-list'),
+                profileInfoBtn: document.getElementById('profile-info-btn'),
+                detailsModal: document.getElementById('details-modal'),
+                modalCloseBtn: document.getElementById('modal-close-btn'),
+                backBtn: document.getElementById('back-btn'),
+                editDetailsBtn: document.getElementById('edit-details-btn'),
+                driverNameInput: document.getElementById('driver-name'),
+                driverAddressInput: document.getElementById('driver-address'),
+                driverLicenseInput: document.getElementById('driver-license'),
+                driverPhoneInput: document.getElementById('driver-phone'),
+                driverEmailInput: document.getElementById('driver-email'),
+                licenseValidityInput: document.getElementById('license-validity'),
+                redeemBtn: document.getElementById('redeem-btn'),
+                redeemModal: document.getElementById('redeem-modal'),
+                redeemModalCloseBtn: document.getElementById('redeem-modal-close-btn'),
+                redeemCancelBtn: document.getElementById('redeem-cancel-btn'),
+                redeemNowBtn: document.getElementById('redeem-now-btn'),
+                redeemableBalance: document.getElementById('redeemable-balance'),
+                redeemAmountInput: document.getElementById('redeem-amount'),
+                selectAccount: document.getElementById('select-account'),
+                
+                // New UI Elements
+                dutyToggle: document.getElementById('duty-toggle'),
+                dutyStatus: document.getElementById('duty-status'),
+                notificationModal: document.getElementById('notification-modal'),
+                acceptRideBtn: document.getElementById('accept-ride-btn'),
+                rejectRideBtn: document.getElementById('reject-ride-btn'),
+                notificationCustomerName: document.getElementById('notification-customer-name'),
+                notificationPhoneNumber: document.getElementById('notification-phone-number'),
+                notificationPrice: document.getElementById('notification-price'),
+                messageBoxModal: document.getElementById('message-box-modal'),
+                messageBoxText: document.getElementById('message-box-text'),
+                messageBoxOkBtn: document.getElementById('message-box-ok-btn')
+            };
+
+            let notificationTimer = null;
+
+            // Sample data for the dashboard
+            const dashboardData = {
+                nightExtraFee: 15.00,
+                dailyBookingsTarget: 10,
+                totalEarnings: 325.50,
+                receivedAmount: 292.95, // Assuming 10% platform fee
+                hours: 18.5,
+                bookings: 42,
+                dailyEarnings: [25, 45, 30, 60, 55, 70, 40],
+                rideHistory: [
+                    { time: '10:30 AM', customer: 'Alex Johnson', amount: 15.25 },
+                    { time: '09:45 AM', customer: 'Maria Rodriguez', amount: 12.00 },
+                    { time: '08:15 AM', customer: 'Chris Evans', amount: 25.75 },
+                    { time: 'Yesterday', customer: 'Jessica Miller', amount: 18.50 },
+                    { time: 'Yesterday', customer: 'Michael Chen', amount: 22.00 },
+                ],
+                driverDetails: {
+                    name: 'Suresh Kumar',
+                    address: '123 Main Street, Bangalore',
+                    licenseNumber: 'KA01-2021-1234567',
+                    phoneNumber: '+91 98765 43210',
+                    email: 'suresh.k@email.com',
+                    licenseValidity: '01/01/2021 to 01/01/2031'
+                },
+                bankAccounts: [
+                    { name: 'ICICI Bank', number: 'xxxx-xxxx-1234' },
+                    { name: 'HDFC Bank', number: 'xxxx-xxxx-5678' }
+                ]
+            };
+
+            // New: Customer data for ride requests
+            const newRides = [
+                { name: 'Priya Sharma', phone: '+91 98765 12345', price: 120.50 },
+                { name: 'Ravi Singh', phone: '+91 91234 56789', price: 85.00 },
+                { name: 'Anjali Patel', phone: '+91 80123 45678', price: 210.75 },
+            ];
+
+            // New: Reusable function to show a custom message box
+            const showMessageBox = (message, title = 'Notification', callback = null) => {
+                const messageBoxTitle = uiElements.messageBoxModal.querySelector('.modal-title');
+                const messageBoxCloseBtn = uiElements.messageBoxModal.querySelector('#message-box-close-btn');
+                
+                uiElements.messageBoxText.textContent = message;
+                messageBoxTitle.textContent = title;
+                uiElements.messageBoxModal.classList.add('open');
+                
+                // Event listener for closing the message box
+                const closeHandler = () => {
+                    uiElements.messageBoxModal.classList.remove('open');
+                    if (callback) {
+                        callback();
+                    }
+                    uiElements.messageBoxOkBtn.removeEventListener('click', closeHandler);
+                    messageBoxCloseBtn.removeEventListener('click', closeHandler);
+                };
+                
+                uiElements.messageBoxOkBtn.addEventListener('click', closeHandler);
+                messageBoxCloseBtn.addEventListener('click', closeHandler);
+            };
+
+            // Function to update the dashboard stats and targets
+            const updateDashboardStats = () => {
+                const extraBookings = Math.max(0, dashboardData.bookings - dashboardData.dailyBookingsTarget);
+                
+                uiElements.totalEarnings.textContent = ₹${dashboardData.totalEarnings.toFixed(2)};
+                uiElements.receivedAmount.textContent = ₹${dashboardData.receivedAmount.toFixed(2)};
+                uiElements.hoursOnRides.textContent = ${dashboardData.hours.toFixed(1)} hrs;
+                uiElements.bookingsCompleted.textContent = dashboardData.bookings;
+
+                uiElements.nightExtraFee.textContent = ₹${dashboardData.nightExtraFee.toFixed(2)};
+                uiElements.dailyBookingsTarget.textContent = dashboardData.dailyBookingsTarget;
+                uiElements.extraBookings.textContent = extraBookings;
+            };
+
+            // Function to draw the daily earnings chart
+            const drawChart = () => {
+                const canvas = uiElements.earningsChart;
+                if (!canvas.getContext) return;
+
+                const ctx = canvas.getContext('2d');
+                const data = dashboardData.dailyEarnings;
+                const maxVal = Math.max(...data);
+                const padding = 20;
+                const width = canvas.width;
+                const height = canvas.height;
+                const chartWidth = width - 2 * padding;
+                const chartHeight = height - 2 * padding;
+                
+                // Clear the canvas
+                ctx.clearRect(0, 0, width, height);
+
+                // Get current foreground color for drawing
+                const lineColor = getComputedStyle(document.documentElement).getPropertyValue('--primary');
+                const textColor = getComputedStyle(document.documentElement).getPropertyValue('--foreground');
+
+                // Draw the line graph
+                ctx.beginPath();
+                ctx.moveTo(padding, height - padding - (data[0] / maxVal) * chartHeight);
+                for (let i = 1; i < data.length; i++) {
+                    const x = padding + (i / (data.length - 1)) * chartWidth;
+                    const y = height - padding - (data[i] / maxVal) * chartHeight;
+                    ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = hsl(${lineColor});
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw points and values
+                ctx.fillStyle = hsl(${lineColor});
+                ctx.font = '12px Inter';
+                ctx.textAlign = 'center';
+                data.forEach((value, i) => {
+                    const x = padding + (i / (data.length - 1)) * chartWidth;
+                    const y = height - padding - (value / maxVal) * chartHeight;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.fillStyle = hsl(${textColor});
+                    ctx.fillText(₹${value}, x, y - 10);
+                });
+            };
+
+            // Function to populate ride history
+            const populateRideHistory = () => {
+                const historyList = uiElements.rideHistoryList;
+                historyList.innerHTML = '';
+                dashboardData.rideHistory.forEach(ride => {
+                    const li = document.createElement('li');
+                    li.className = 'history-item';
+                    li.innerHTML = `
+                        <div class="details">
+                            <h4>Ride to ${ride.customer.split(' ')[0]}'s location</h4>
+                            <p>${ride.time}</p>
+                        </div>
+                        <div class="amount">₹${ride.amount.toFixed(2)}</div>
+                    `;
+                    historyList.appendChild(li);
+                });
+            };
+            
+            // Theme toggle logic
+            const themes = ['morning', 'afternoon', 'evening', 'night'];
+            const applyTheme = (theme) => {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                drawChart(); // Redraw chart on theme change
+            };
+
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else {
+                applyTheme('night');
+            }
+
+            uiElements.themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const currentIndex = themes.indexOf(currentTheme);
+                const nextIndex = (currentIndex + 1) % themes.length;
+                const newTheme = themes[nextIndex];
+                applyTheme(newTheme);
+            });
+
+            // Modal logic (for profile details)
+            const openDetailsModal = () => {
+                populateModalFields();
+                uiElements.detailsModal.classList.add('open');
+            };
+
+            const closeDetailsModal = () => {
+                uiElements.detailsModal.classList.remove('open');
+                uiElements.editDetailsBtn.textContent = 'Edit';
+                uiElements.editDetailsBtn.classList.remove('btn-save');
+                setModalFieldsReadonly(true);
+            };
+
+            const populateModalFields = () => {
+                const details = dashboardData.driverDetails;
+                uiElements.driverNameInput.value = details.name;
+                uiElements.driverAddressInput.value = details.address;
+                uiElements.driverLicenseInput.value = details.licenseNumber;
+                uiElements.driverPhoneInput.value = details.phoneNumber;
+                uiElements.driverEmailInput.value = details.email;
+                uiElements.licenseValidityInput.value = details.licenseValidity;
+            };
+
+            const setModalFieldsReadonly = (isReadonly) => {
+                uiElements.driverNameInput.readOnly = isReadonly;
+                uiElements.driverAddressInput.readOnly = isReadonly;
+                uiElements.driverLicenseInput.readOnly = isReadonly;
+                uiElements.driverPhoneInput.readOnly = isReadonly;
+                uiElements.driverEmailInput.readOnly = isReadonly;
+                uiElements.licenseValidityInput.readOnly = isReadonly;
+            };
+            
+            const handleEditClick = () => {
+                const button = uiElements.editDetailsBtn;
+                if (button.textContent === 'Edit') {
+                    button.textContent = 'Save';
+                    setModalFieldsReadonly(false);
+                } else {
+                    button.textContent = 'Edit';
+                    setModalFieldsReadonly(true);
+                    // In a real app, you would save the data here
+                }
+            };
+            
+            uiElements.profileInfoBtn.addEventListener('click', openDetailsModal);
+            uiElements.modalCloseBtn.addEventListener('click', closeDetailsModal);
+            uiElements.backBtn.addEventListener('click', closeDetailsModal);
+            uiElements.editDetailsBtn.addEventListener('click', handleEditClick);
+
+            // Redemption Modal Logic
+            const openRedeemModal = () => {
+                uiElements.redeemableBalance.textContent = ₹${dashboardData.receivedAmount.toFixed(2)};
+                populateAccountOptions();
+                uiElements.redeemModal.classList.add('open');
+            };
+
+            const closeRedeemModal = () => {
+                uiElements.redeemModal.classList.remove('open');
+            };
+
+            const populateAccountOptions = () => {
+                uiElements.selectAccount.innerHTML = '';
+                dashboardData.bankAccounts.forEach(account => {
+                    const option = document.createElement('option');
+                    option.value = account.number;
+                    option.textContent = ${account.name} (${account.number});
+                    uiElements.selectAccount.appendChild(option);
+                });
+            };
+
+            const handleRedeemNow = () => {
+                const amount = parseFloat(uiElements.redeemAmountInput.value);
+                const selectedAccount = uiElements.selectAccount.value;
+                
+                if (isNaN(amount) || amount <= 0 || amount > dashboardData.receivedAmount) {
+                    showMessageBox('Please enter a valid amount.');
+                    return;
+                }
+
+                if (!selectedAccount) {
+                    showMessageBox('Please select an account.');
+                    return;
+                }
+
+                showMessageBox(Transfer of ₹${amount.toFixed(2)} to account ending in ${selectedAccount.slice(-4)} is being processed.);
+                closeRedeemModal();
+            };
+
+            uiElements.redeemBtn.addEventListener('click', openRedeemModal);
+            uiElements.redeemModalCloseBtn.addEventListener('click', closeRedeemModal);
+            uiElements.redeemCancelBtn.addEventListener('click', closeRedeemModal);
+            uiElements.redeemNowBtn.addEventListener('click', handleRedeemNow);
+
+            // New: Duty Toggle Logic
+            uiElements.dutyToggle.addEventListener('change', (event) => {
+                if (event.target.checked) {
+                    uiElements.dutyStatus.textContent = 'On-Duty';
+                    // Start a timer to show a new ride request after 3 seconds
+                    notificationTimer = setTimeout(() => {
+                        const rideData = newRides[Math.floor(Math.random() * newRides.length)];
+                        uiElements.notificationCustomerName.textContent = rideData.name;
+                        uiElements.notificationPhoneNumber.textContent = rideData.phone;
+                        uiElements.notificationPrice.textContent = ₹${rideData.price.toFixed(2)};
+                        uiElements.notificationModal.classList.add('open');
+                    }, 3000); // 3 seconds
+                } else {
+                    uiElements.dutyStatus.textContent = 'Off-Duty';
+                    // Clear the timer if the user goes off-duty before a notification appears
+                    if (notificationTimer) {
+                        clearTimeout(notificationTimer);
+                    }
+                    uiElements.notificationModal.classList.remove('open');
+                }
+            });
+
+            // New: Ride Notification Modal Actions
+            uiElements.acceptRideBtn.addEventListener('click', () => {
+                uiElements.notificationModal.classList.remove('open');
+                showMessageBox('Ride Accepted! You can now proceed to the pickup location.', 'Success');
+            });
+
+            uiElements.rejectRideBtn.addEventListener('click', () => {
+                uiElements.notificationModal.classList.remove('open');
+            });
+
+            // Initial function calls
+            updateDashboardStats();
+            populateRideHistory();
+            drawChart();
+
+            // --- Smart Predictive Ride Pooling (SPR) for Driver ---
+function handleAcceptPool(poolId) {
+    const result = SPR_POOL_MANAGER.assignDriver(poolId);
+    alert(result.message);
+    if (result.success) {
+        renderDriverPools();
+    }
+}
+
+function renderDriverPools() {
+    // Show pools that are pending and need a driver
+    const pools = SPR_POOL_MANAGER.getAvailablePoolsForDriver();
+    const poolsListContainer = document.getElementById('spr-pools-list-driver');
+    const noPoolsMsg = document.getElementById('no-driver-pools-msg');
+    
+    // Clear previous list but keep the 'no pools' message template
+    while (poolsListContainer.firstChild && poolsListContainer.firstChild.id !== 'no-driver-pools-msg') {
+        poolsListContainer.removeChild(poolsListContainer.firstChild);
+    }
+
+    if (pools.length === 0) {
+        noPoolsMsg.style.display = 'block';
+        return;
+    }
+
+    noPoolsMsg.style.display = 'none';
+
+    pools.forEach(pool => {
+        const departure = new Date(pool.departureTime);
+        const timeString = departure.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const potentialEarning = pool.capacity * pool.pricePerHead;
+
+        const poolCard = document.createElement('div');
+        poolCard.className = 'pool-card';
+        poolCard.innerHTML = `
+            <div class="pool-card-header">
+                <h4>${pool.destination}</h4>
+                <span class="price">~₹${potentialEarning}</span>
+            </div>
+            <p class="pool-card-details">
+                ${pool.passengers.length}/${pool.capacity} passengers joined | Departs at ${timeString}
+            </p>
+            <button class="btn btn-primary accept-pool-btn" data-pool-id="${pool.poolId}">Accept Pool</button>
+        `;
+        // Insert before the 'no pools' message
+        poolsListContainer.insertBefore(poolCard, noPoolsMsg);
+    });
+
+    document.querySelectorAll('.accept-pool-btn').forEach(button => {
+        button.addEventListener('click', (e) => handleAcceptPool(e.target.dataset.poolId));
+    });
+}
+
+// Initial call to render the pools when the page loads
+renderDriverPools();
+
+// Listen for storage changes to auto-refresh the list if another page modifies the pools
+window.addEventListener('storage', () => {
+    console.log('Storage changed, re-rendering driver pools...');
+    renderDriverPools();
+});
+
+
+        });
+    </script>
+</body>
+</html>

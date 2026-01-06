@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - Book a Ride</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; --card: 222.2 84% 6.9%; --card-foreground: 210 40% 98%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --secondary-foreground: 210 40% 98%; --muted: 217.2 32.6% 17.5%; --muted-foreground: 215 20.2% 65.1%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+        [data-theme='day'] {
+            --background: 0 0% 100%; --foreground: 224 71.4% 4.9%; --card: 0 0% 100%; --card-foreground: 224 71.4% 4.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --secondary-foreground: 224 71.4% 4.9%; --muted: 210 40% 96.1%; --muted-foreground: 215.4 16.3% 46.9%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 346.8 77.2% 49.8%;
+        }
+        
+        /* GENERAL STYLING */
+        *, *::before, *::after { box-sizing: border-box; }
+        body, html {
+            height: 100%; margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background)); color: hsl(var(--foreground));
+            transition: background-color 0.3s, color 0.3s;
+            display: flex; flex-direction: column; min-height: 100vh;
+            position: relative;
+        }
+
+        /* Map Container */
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .main-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .top-bar {
+            display:flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 1rem;
+        }
+        
+        .booking-card {
+            background-color: hsl(var(--card));
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin: auto 1rem 1rem 1rem; /* Pushes card to the bottom */
+        }
+        .header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: hsl(var(--card-foreground));
+        }
+        
+        /* Initial Booking UI */
+        .input-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .input-group {
+            position: relative;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem; 
+            background-color: hsl(var(--input));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            color: hsl(var(--foreground));
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 2px;
+            border-color: hsl(var(--ring));
+        }
+        .input-group svg {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: hsl(var(--muted-foreground));
+            pointer-events: none;
+        }
+        .location-suggestions {
+            position: absolute;
+            width: 100%;
+            z-index: 10;
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            margin-top: 0.25rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        .suggestion-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            color: hsl(var(--foreground));
+            transition: background-color 0.2s;
+        }
+        .suggestion-item:hover {
+            background-color: hsl(var(--muted));
+        }
+        .suggestion-item:not(:last-child) {
+            border-bottom: 1px solid hsl(var(--border));
+        }
+        .suggestion-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            text-align: left;
+            transition: background-color 0.2s;
+        }
+        .suggestion-btn:hover {
+            background-color: hsl(var(--muted));
+        }
+        .suggestion-btn svg {
+            color: hsl(var(--muted-foreground));
+            position: static;
+            transform: none;
+        }
+        .suggestion-btn span {
+            font-weight: 500;
+            color: hsl(var(--foreground));
+        }
+        .swap-button {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 3;
+        }
+        .swap-button:hover {
+            background-color: hsl(var(--border));
+        }
+        .action-buttons {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.8rem 1.2rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-primary {
+            background-color: hsl(var(--primary)); 
+            color: hsl(var(--primary-foreground));
+        }
+        .btn-secondary {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn svg {
+            margin-right: 0.5rem;
+        }
+        .locations-container {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .locations-column {
+            flex: 1;
+        }
+        .locations-column h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .location-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            border-radius: var(--radius);
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+        .location-item:hover {
+            background-color: hsl(var(--border));
+        }
+        .location-item svg {
+            color: hsl(var(--secondary-foreground));
+        }
+        .location-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        .location-content .main-text {
+            font-weight: 500;
+            color: hsl(var(--secondary-foreground));
+        }
+        .location-content .sub-text {
+            font-size: 0.75rem;
+            color: hsl(var(--muted-foreground));
+            margin-top: 0.25rem;
+        }
+        .distance-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: hsl(var(--muted-foreground));
+            position: absolute;
+            right: 0.75rem;
+            top: 0.75rem;
+        }
+        .profile-btn, .theme-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            transition: background-color 0.2s;
+            color: hsl(var(--foreground));
+        }
+        .profile-btn:hover, .theme-toggle-btn:hover {
+            background-color: hsl(var(--secondary));
+        }
+        .theme-toggle-btn .light-icon { display: none; }
+        .theme-toggle-btn .dark-icon { display: block; }
+        [data-theme='night'] .theme-toggle-btn .light-icon { display: block; }
+        [data-theme='night'] .theme-toggle-btn .dark-icon { display: none; }
+        @media (max-width: 768px) {
+            .booking-card { padding: 1rem; }
+            .btn { font-size: 0.9rem; }
+            .locations-container { flex-direction: column; gap: 1rem; }
+        }
+
+        /* Modal styles for "Book for Now" or "Pre-book" */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s;
+            z-index: 1000;
+        }
+        .modal.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background-color: hsl(var(--card));
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .modal-buttons button, .modal-buttons a {
+            width: 100%;
+            padding: 1rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            border: none;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #book-now-option {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border: none;
+        }
+        #pre-book-option {
+            background-color: transparent;
+            color: hsl(var(--primary));
+            border: 2px solid hsl(var(--primary));
+        }
+        #book-now-option:active, #pre-book-option:active {
+            transform: translateY(2px);
+        }
+        .modal-content p {
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .contact-info a {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+        .contact-info a:hover {
+            background-color: hsl(var(--border));
+        }
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: hsl(var(--muted-foreground));
+            cursor: pointer;
+        }
+        
+        /* FOOTER & NAVIGATION STYLES */
+        footer {
+            position: relative; /* Changed from fixed */
+            width: 100%;
+            background-color: hsl(var(--card));
+            border-top: 1px solid hsl(var(--border));
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            color: hsl(var(--muted-foreground));
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            transition: color 0.2s, background-color 0.2s;
+        }
+        .nav-btn svg {
+            width: 24px;
+            height: 24px;
+            transition: color 0.2s;
+        }
+        .nav-btn.active, .nav-btn:hover {
+            color: hsl(var(--primary));
+            background-color: hsl(var(--secondary));
+        }
+        .nav-btn.active svg, .nav-btn:hover svg {
+            color: hsl(var(--primary));
+        }
+        .nav-btn span {
+            line-height: 1;
+        }
+        
+        /* SOS button specific styles */
+        #sos-btn {
+            color: hsl(var(--primary));
+            font-weight: 600;
+        }
+        #sos-btn svg {
+            color: hsl(var(--primary));
+        }
+
+        /* Floating Chat Button */
+        .chat-fab {
+            position: fixed;
+            bottom: 5.5rem; /* Above the footer navigation */
+            right: 1.5rem;
+            width: 56px;
+            height: 56px;
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 101; /* Above footer, below modals */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            text-decoration: none;
+        }
+        .chat-fab:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+        }
+        .chat-fab svg {
+            width: 28px;
+            height: 28px;
+        }
+    </style>
+    <!-- NOTE: Replace YOUR_API_KEY with your actual Google Maps API key -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap&libraries=places" async defer></script>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="main-content">
+        <div class="top-bar">
+            <button id="profile-btn" class="profile-btn" onclick="window.location.href='myprofile.html'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="7" r="4"></circle>
+                    <path d="M12 15a8 8 0 0 0-8 8h16a8 8 0 0 0-8-8z"></path>
+                </svg>
+            </button>
+            <button id="theme-toggle-btn" class="theme-toggle-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="light-icon">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M4.93 19.07l1.41-1.41"></path><path d="M17.66 6.34l1.41-1.41"></path>
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dark-icon">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="booking-card" id="booking-card">
+            <div id="initial-booking-view">
+                <div class="header">Where to?</div>
+                
+                <div class="input-container">
+                    <div class="input-group">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4-8-10a8 8 0 0 1 16 0c0 6-8 10-8 10z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <input type="text" id="pickup-location" placeholder="Enter Pickup Location" />
+                        <div id="pickup-suggestions" class="location-suggestions">
+                            <div class="suggestion-item">
+                                <button class="suggestion-btn" id="current-location-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+                                    <span>Use Current Location</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <input type="text" id="drop-location" placeholder="Enter Drop Location" />
+                        <div id="drop-suggestions" class="location-suggestions"></div>
+                    </div>
+                    
+                    <div class="swap-button" id="swap-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 5 12 19"></polyline><path d="m19 12-7 7-7-7"></path><path d="M5 5l7-7 7 7"></path></svg>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="find-ride-btn">Book a ride</button>
+                    <a href="rideforother.html"><button class="btn btn-primary">Book for other</button></a>
+                    <button class="btn btn-secondary" id="offline-booking-btn">Offline Booking</button>
+                </div>
+
+                <div class="locations-container">
+                    <div class="locations-column">
+                        <h3>Saved Places</h3>
+                        <div class="location-item" data-location="Home" data-address="123 Main Street" data-distance="3.2 km">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 9h2v12h14V9h2z"></path></svg>
+                            <div class="location-content"><span class="main-text">Home</span><span class="sub-text">123 Main Street</span></div>
+                            <span class="distance-text">3.2 km</span>
+                        </div>
+                        <div class="location-item" data-location="Work" data-address="567 Business Park" data-distance="8.5 km">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><path d="M16 2v4a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V2"></path><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="16" y2="16"></line></svg>
+                            <div class="location-content"><span class="main-text">Work</span><span class="sub-text">567 Business Park</span></div>
+                            <span class="distance-text">8.5 km</span>
+                        </div>
+                    </div>
+                    <div class="locations-column">
+                        <h3>Frequent Destinations</h3>
+                        <div class="location-item" data-location="Railway Station" data-address="Railway Station Road" data-distance="1.1 km">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 17a4 4 0 0 0-4-4V6a4 0 0 0-4-4"></path><path d="M13 17h11a2 2 0 0 0 2-2v-4a2 0 0 0-2-2H13"></path><path d="M5 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2"></path></svg>
+                            <div class="location-content"><span class="main-text">Railway Station</span><span class="sub-text">Railway Station Road</span></div>
+                            <span class="distance-text">1.1 km</span>
+                        </div>
+                        <div class="location-item" data-location="Bus Stand" data-address="Bus Stand Circle" data-distance="4.3 km">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect><path d="M7 19v-4"></path><path d="M17 19v-4"></path><rect x="7" y="15" width="10" height="4"></rect><path d="M12 5L12 15"></path></svg>
+                            <div class="location-content"><span class="main-text">Bus Stand</span><span class="sub-text">Bus Stand Circle</span></div>
+                            <span class="distance-text">4.3 km</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <a href="booking.html" class="nav-btn active"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5a2 2 0 0 1 1.7-1h14.6a2 2 0 0 1 1.7 1v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M11 20v-5a2 2 0 0 1 2-2v0a2 2 0 0 1 2 2v5"/><path d="m18 10-6-6-6 6"/></svg><span>Home</span></a>
+            <a href="wallet.html" class="nav-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12H8a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h13"/><path d="M3 14h.01"/><path d="M3 10h.01"/><path d="M3 6h.01"/><path d="M12 2v.01"/><path d="M12 22v.01"/><path d="M21 6v.01"/><path d="M21 18v.01"/><path d="M6 12h.01"/><path d="M18 12h.01"/><rect x="2" y="7" width="20" height="10" rx="2" ry="2"/></svg><span>Wallet</span></a>
+            <a href="status.html" class="nav-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><path d="M16 2v4a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V2"></path><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="16" y2="16"></line></svg><span>Status</span></a>
+            <button id="sos-btn" class="nav-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span>SOS</span></button>
+        </footer>
+    </div>
+    
+    <div id="booking-options-modal" class="modal">
+        <div class="modal-content"><button class="close-btn" id="close-booking-modal-btn">×</button><h3>How do you want to book?</h3><div class="modal-buttons"><button id="book-now-option">Book for Now</button><button id="pre-book-option">Pre-book for Later</button></div></div>
+    </div>
+    
+    <!-- Offline Booking Modal -->
+    <div id="offline-modal" class="modal">
+        <div class="modal-content"><button class="close-btn" id="close-offline-modal-btn">×</button><h3>Offline Booking</h3><p>You can book a ride by calling or messaging us on WhatsApp.</p><div class="contact-info"><a href="tel:+919876543210"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2.02 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.08 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>Call: +91 98765 43210</span></a><a href="https://wa.me/919876543210"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 0 0 12.18 3c-.9 0-1.8.1-2.65.31A9 9 0 0 0 3 12.79c.27 1.25.68 2.47 1.21 3.65L3 21l5.61-1.49a9.01 9.01 0 0 0 12.39-7.22z"/></svg><span>WhatsApp: +91 98765 43210</span></a></div></div>
+    </div>
+
+    <!-- SOS Modal -->
+    <div id="sos-modal" class="modal">
+        <div class="modal-content"><button class="close-btn" id="close-sos-modal-btn">×</button><h3>Emergency Assistance</h3><p>In case of an emergency, you can immediately contact the police or a hospital.</p><div class="contact-info"><a href="tel:100" style="background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground));"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2.02 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.08 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>Call Police: 100</span></a><a href="tel:108"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2.02 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.08 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>Call Hospital: 108</span></a></div></div>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <a href="chat.html" class="chat-fab" aria-label="Open AI Assistant">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    </a>
+
+    <script>
+        // --- Google Maps and Geolocation Logic ---
+        let map;
+        let marker = null;
+        let infoWindow;
+
+        function initMap() {
+            const defaultLocation = { lat: 13.6288, lng: 79.4192 }; // Tirupati
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 15,
+                center: defaultLocation,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+                zoomControl: false,
+            });
+            infoWindow = new google.maps.InfoWindow();
+            startTracking();
+        }
+
+        function startTracking() {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    (position) => {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                        };
+                        if (marker) {
+                            marker.setPosition(pos);
+                        } else {
+                            marker = new google.maps.Marker({
+                                position: pos,
+                                map: map,
+                                title: "Your Location",
+                            });
+                        }
+                        // Only center on the first load, not on every update
+                        if (map.getZoom() === 15) { // Simple check if it's the initial state
+                           map.setCenter(pos);
+                        }
+                        infoWindow.close();
+                    },
+                    () => {
+                        handleLocationError(true, map.getCenter());
+                    }
+                );
+            } else {
+                handleLocationError(false, map.getCenter());
+            }
+        }
+
+        function handleLocationError(browserHasGeolocation, pos) {
+            infoWindow.setPosition(pos);
+            infoWindow.setContent(
+                browserHasGeolocation
+                    ? "Error: The Geolocation service failed. Please enable location permissions."
+                    : "Error: Your browser doesn't support geolocation."
+            );
+            infoWindow.open(map);
+        }
+
+        // --- Booking Page Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            
+            function applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            }
+
+            const savedTheme = localStorage.getItem('theme') || 'night';
+            applyTheme(savedTheme);
+
+            themeToggleBtn.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'night' ? 'day' : 'night';
+                applyTheme(newTheme);
+            });
+
+            const pickupInput = document.getElementById('pickup-location');
+            const pickupSuggestions = document.getElementById('pickup-suggestions');
+            const dropInput = document.getElementById('drop-location');
+            const dropSuggestions = document.getElementById('drop-suggestions');
+            const swapBtn = document.getElementById('swap-btn');
+            const findRideBtn = document.getElementById('find-ride-btn');
+            const offlineBookingBtn = document.getElementById('offline-booking-btn');
+            const bookingOptionsModal = document.getElementById('booking-options-modal');
+            const closeBookingModalBtn = document.getElementById('close-booking-modal-btn');
+            const bookNowOptionBtn = document.getElementById('book-now-option');
+            const preBookOptionBtn = document.getElementById('pre-book-option');
+            const offlineModal = document.getElementById('offline-modal');
+            const closeOfflineModalBtn = document.getElementById('close-offline-modal-btn');
+            const sosBtn = document.getElementById('sos-btn');
+            const sosModal = document.getElementById('sos-modal');
+            const closeSosModalBtn = document.getElementById('close-sos-modal-btn');
+            const currentLocationBtn = document.getElementById('current-location-btn');
+
+            findRideBtn.addEventListener('click', () => bookingOptionsModal.classList.add('visible'));
+            closeBookingModalBtn.addEventListener('click', () => bookingOptionsModal.classList.remove('visible'));
+            offlineBookingBtn.addEventListener('click', () => offlineModal.classList.add('visible'));
+            closeOfflineModalBtn.addEventListener('click', () => offlineModal.classList.remove('visible'));
+            sosBtn.addEventListener('click', () => sosModal.classList.add('visible'));
+            closeSosModalBtn.addEventListener('click', () => sosModal.classList.remove('visible'));
+
+            bookNowOptionBtn.addEventListener('click', () => {
+                window.location.href = 'selectride.html';
+            });
+            preBookOptionBtn.addEventListener('click', () => {
+                window.location.href = 'prebook.html';
+            });
+
+            // --- Geolocation and Address Population ---
+            currentLocationBtn.addEventListener('click', () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                        };
+
+                        map.setCenter(pos);
+                        map.setZoom(17);
+                        if (marker) {
+                            marker.setPosition(pos);
+                        } else {
+                            marker = new google.maps.Marker({
+                                position: pos,
+                                map: map,
+                                title: "Your Location",
+                            });
+                        }
+                        
+                        // Use Geocoder to get the address
+                        const geocoder = new google.maps.Geocoder();
+                        geocoder.geocode({ location: pos }, (results, status) => {
+                            if (status === "OK") {
+                                if (results[0]) {
+                                    pickupInput.value = results[0].formatted_address;
+                                    pickupSuggestions.style.display = 'none';
+                                } else {
+                                    alert("No address found for your location.");
+                                }
+                            } else {
+                                alert("Geocoder failed due to: " + status);
+                            }
+                        });
+
+                    }, () => {
+                        handleLocationError(true, map.getCenter());
+                    });
+                } else {
+                    handleLocationError(false, map.getCenter());
+                }
+            });
+
+            // Show suggestions on focus
+            pickupInput.addEventListener('focus', () => {
+                pickupSuggestions.style.display = 'block';
+            });
+
+            // Hide suggestions on click outside
+            document.addEventListener('click', (e) => {
+                if (e.target !== pickupInput) {
+                    pickupSuggestions.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

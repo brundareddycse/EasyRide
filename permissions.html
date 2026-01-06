@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyRide - Permissions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        [data-theme='morning'] {
+            --background: 210 40% 98%; --foreground: 222.2 84% 4.9%; --card: 210 40% 96.1%; --card-foreground: 222.2 84% 4.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --secondary-foreground: 222.2 47.4% 11.2%; --muted: 210 40% 96.1%; --muted-foreground: 215 20.2% 65.1%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 222.2 84% 4.9%;
+        }
+        [data-theme='afternoon'] {
+            --background: 20 14.3% 95.9%; --foreground: 20 14.3% 4.1%; --card: 16 12.3% 93.9%; --card-foreground: 20 14.3% 4.1%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 4.8% 95.9%; --secondary-foreground: 240 5.9% 10%; --muted: 240 4.8% 95.9%; --muted-foreground: 240 3.8% 46.1%; --border: 240 5.9% 90%; --input: 240 5.9% 90%; --ring: 240 5.9% 10%;
+        }
+        [data-theme='evening'] {
+            --background: 240 10% 3.9%; --foreground: 0 0% 98%; --card: 240 10% 8.9%; --card-foreground: 0 0% 98%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 3.7% 15.9%; --secondary-foreground: 0 0% 98%; --muted: 240 3.7% 15.9%; --muted-foreground: 240 5% 64.9%; --border: 240 3.7% 15.9%; --input: 240 3.7% 15.9%; --ring: 346.8 77.2% 49.8%;
+        }
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; --card: 222.2 84% 6.9%; --card-foreground: 210 40% 98%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --secondary-foreground: 210 40% 98%; --muted: 217.2 32.6% 17.5%; --muted-foreground: 215 20.2% 65.1%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+        
+        /* GENERAL STYLING */
+        body, html {
+            height: 100%; margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            transition: background-color 0.3s, color 0.3s;
+            display: flex; justify-content: center; align-items: center; text-align: center;
+        }
+        .popup {
+            background-color: hsl(var(--card));
+            border-radius: var(--radius);
+            padding: 2rem;
+            max-width: 350px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .popup h2 {
+            margin-top: 0;
+            font-weight: 600;
+            color: hsl(var(--card-foreground));
+            margin-bottom: 0.5rem;
+        }
+        .popup p {
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+        .btn-container {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        .btn {
+            background: none;
+            border: none;
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s, opacity 0.2s;
+            border-radius: var(--radius);
+            font-size: 1rem;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        .btn-primary {
+            color: hsl(var(--primary));
+        }
+        .btn-secondary {
+            color: hsl(var(--secondary-foreground));
+        }
+    </style>
+</head>
+<body>
+    <div class="popup" id="initial-permissions">
+        <h2>Allow "EasyRide" to access?</h2>
+        <p>Allow EasyRide to manage phone calls and send you notifications for ride updates.</p>
+        <div class="btn-container">
+            <button class="btn btn-secondary" id="deny-initial-btn">Deny</button>
+            <button class="btn btn-primary" id="allow-initial-btn">Allow</button>
+        </div>
+    </div>
+
+    <div class="popup" id="location-permission" style="display: none;">
+        <h2>Allow "EasyRide" to access your location?</h2>
+        <p>Your location is used to show nearby drivers and set your pickup point accurately. This is required to use the app.</p>
+        <div class="btn-container">
+            <button class="btn btn-secondary" id="deny-location-btn">Don't Allow</button>
+            <button class="btn btn-primary" id="allow-location-btn">Allow</button>
+        </div>
+    </div>
+
+    <script>
+        const initialPermissions = document.getElementById('initial-permissions');
+        const locationPermission = document.getElementById('location-permission');
+
+        // Handlers for the first pop-up
+        document.getElementById('allow-initial-btn').addEventListener('click', () => {
+            initialPermissions.style.display = 'none';
+            locationPermission.style.display = 'block';
+        });
+
+        document.getElementById('deny-initial-btn').addEventListener('click', () => {
+            initialPermissions.style.display = 'none';
+            locationPermission.style.display = 'block';
+        });
+
+        // Handlers for the second pop-up (location)
+        document.getElementById('allow-location-btn').addEventListener('click', () => {
+            window.location.href = `booking.html`;
+        });
+
+        document.getElementById('deny-location-btn').addEventListener('click', () => {
+            window.location.href = `booking.html`;
+        });
+    </script>
+</body>
+</html>

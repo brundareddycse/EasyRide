@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - Login</title>
+    <meta name="description" content="Login to EasyRide with your phone number or Google account." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        [data-theme='morning'] {
+            --background: 210 40% 98%; --foreground: 222.2 84% 4.9%; --card: 210 40% 96.1%; --card-foreground: 222.2 84% 4.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --secondary-foreground: 222.2 47.4% 11.2%; --muted: 210 40% 96.1%; --muted-foreground: 215 20.2% 65.1%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 222.2 84% 4.9%;
+        }
+        [data-theme='afternoon'] {
+            --background: 20 14.3% 95.9%; --foreground: 20 14.3% 4.1%; --card: 16 12.3% 93.9%; --card-foreground: 20 14.3% 4.1%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 4.8% 95.9%; --secondary-foreground: 240 5.9% 10%; --muted: 240 4.8% 95.9%; --muted-foreground: 240 3.8% 46.1%; --border: 240 5.9% 90%; --input: 240 5.9% 90%; --ring: 240 5.9% 10%;
+        }
+        [data-theme='evening'] {
+            --background: 240 10% 3.9%; --foreground: 0 0% 98%; --card: 240 10% 8.9%; --card-foreground: 0 0% 98%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 3.7% 15.9%; --secondary-foreground: 0 0% 98%; --muted: 240 3.7% 15.9%; --muted-foreground: 240 5% 64.9%; --border: 240 3.7% 15.9%; --input: 240 3.7% 15.9%; --ring: 346.8 77.2% 49.8%;
+        }
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; --card: 222.2 84% 6.9%; --card-foreground: 210 40% 98%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --secondary-foreground: 210 40% 98%; --muted: 217.2 32.6% 17.5%; --muted-foreground: 215 20.2% 65.1%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+
+        /* * GENERAL STYLING */
+        *, *::before, *::after { box-sizing: border-box; }
+        body, html {
+            height: 100%; margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background)); color: hsl(var(--foreground));
+            transition: background-color 0.3s, color 0.3s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 2rem 1rem;
+        }
+
+        .logo { font-size: 2.5rem; font-weight: 700; color: hsl(var(--primary)); margin-bottom: 0.5rem; }
+        .tagline { font-size: 1.25rem; color: hsl(var(--muted-foreground)); margin-bottom: 2rem; }
+        .card { width: 100%; max-width: 350px; padding: 1.5rem; background-color: hsl(var(--card)); border-radius: var(--radius); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .label { display: block; text-align: left; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: hsl(var(--muted-foreground)); }
+        .input { width: 100%; padding: 0.75rem 1rem; background-color: hsl(var(--input)); border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) - 2px); color: hsl(var(--foreground)); font-size: 1rem; margin-bottom: 1rem; transition: border-color 0.2s; }
+        .input:focus { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; border-color: hsl(var(--ring)); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 0.8rem 1.2rem; border-radius: var(--radius); font-weight: 600; cursor: pointer; border: none; transition: opacity 0.2s, transform 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); margin-bottom: 0.75rem; }
+        .btn-secondary { background-color: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
+        .login-link { font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-top: 1rem; }
+        .login-link a { color: hsl(var(--primary)); text-decoration: none; font-weight: 600; }
+        .google-icon { margin-right: 0.5rem; }
+        .theme-toggle-btn { position: fixed; top: 1rem; right: 1rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background-color: hsl(var(--card)); color: hsl(var(--foreground)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); cursor: pointer; transition: background-color 0.2s, transform 0.2s; }
+        .theme-toggle-btn:hover { background-color: hsl(var(--secondary)); }
+        .theme-toggle-btn:active { transform: scale(0.95); }
+        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: hsl(var(--foreground)); color: hsl(var(--background)); padding: 1rem 1.5rem; border-radius: var(--radius); box-shadow: 0 4px 12px rgba(0,0,0,0.1); opacity: 0; visibility: hidden; transition: opacity 0.3s, bottom 0.3s, visibility 0.3s; z-index: 1000; }
+        #toast.show { opacity: 1; visibility: visible; bottom: 40px; }
+    </style>
+</head>
+<body>
+    <div style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;">
+        <h1 class="logo">EasyRide</h1>
+        <p class="tagline">Smart & reliable campus rides.</p>
+        <div class="card">
+            <form id="phone-auth-form">
+                <label for="phone" class="label">Continue with Phone Number</label>
+                <input type="tel" id="phone" class="input" placeholder="e.g., 9876543210" required>
+                <button type="submit" class="btn btn-primary">Continue</button>
+            </form>
+            <button id="google-auth-btn" class="btn btn-secondary">
+                <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.28C22.56 11.45 22.48 10.64 22.34 9.85H12V14.16H18.66C18.38 15.68 17.52 17.06 16.22 17.98V21.84H20.73C23.23 19.66 24.63 16.32 24.63 12.28C24.63 11.58 24.57 10.89 24.47 10.22L22.56 12.28Z" fill="#4285F4"/><path d="M12 24.54C15.28 24.54 18.06 23.46 20.21 21.61L16.22 17.98C15.11 18.73 13.67 19.18 12 19.18C8.91 19.18 6.22 17.05 5.28 14.12H1.19V17.98C3.12 22.18 7.29 24.54 12 24.54Z" fill="#34A853"/><path d="M5.28 14.12C5.03 13.39 4.88 12.65 4.88 11.97C4.88 11.29 5.03 10.55 5.28 9.82V5.96H1.19C0.43 7.37 0 9.11 0 11.02C0 12.93 0.43 14.67 1.19 16.08L5.28 14.12Z" fill="#FBBC05"/><path d="M12 4.86C13.84 4.86 15.48 5.53 16.88 6.88L20.31 3.23C18.04 1.12 15.28 0 12 0C7.29 0 3.12 2.36 1.19 6.56L5.28 9.82C6.22 6.89 8.91 4.86 12 4.86Z" fill="#EA4335"/></svg>
+                Continue with Google
+            </button>
+            <p class="login-link">Already have an account? <a href="login1.html">Log In</a></p>
+        </div>
+    </div>
+    
+    <button id="theme-toggle" class="theme-toggle-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+    <div id="toast"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const uiElements = {
+                phoneInput: document.getElementById('phone'),
+                toast: document.getElementById('toast'),
+                themeToggle: document.getElementById('theme-toggle'),
+                googleAuthBtn: document.getElementById('google-auth-btn'),
+            };
+
+            const showToast = (message) => {
+                uiElements.toast.textContent = message;
+                uiElements.toast.classList.add('show');
+                setTimeout(() => uiElements.toast.classList.remove('show'), 3000);
+            };
+
+            document.getElementById('phone-auth-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const phoneNumber = uiElements.phoneInput.value;
+                if (phoneNumber.length < 10) {
+                    showToast('Please enter a valid phone number.');
+                    return;
+                }
+                window.location.href = `otp-page1.html?phone=${phoneNumber}`;
+            });
+
+            uiElements.googleAuthBtn.addEventListener('click', () => {
+                window.location.href = `google-login.html`;
+            });
+
+            uiElements.themeToggle.addEventListener('click', () => {
+                const themes = ['morning', 'afternoon', 'evening', 'night'];
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const currentIndex = themes.indexOf(currentTheme);
+                const nextIndex = (currentIndex + 1) % themes.length;
+                document.documentElement.setAttribute('data-theme', themes[nextIndex]);
+            });
+            
+        });
+    </script>
+</body>
+</html>

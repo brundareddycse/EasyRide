@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - Pre-book a Ride</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* * THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; --card: 222.2 84% 6.9%; --card-foreground: 210 40% 98%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --secondary-foreground: 210 40% 98%; --muted: 217.2 32.6% 17.5%; --muted-foreground: 215 20.2% 65.1%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+        [data-theme='day'] {
+            --background: 0 0% 100%; --foreground: 224 71.4% 4.9%; --card: 0 0% 100%; --card-foreground: 224 71.4% 4.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --secondary-foreground: 224 71.4% 4.9%; --muted: 210 40% 96.1%; --muted-foreground: 215.4 16.3% 46.9%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 346.8 77.2% 49.8%;
+        }
+        
+        /* GENERAL STYLING */
+        *, *::before, *::after { box-sizing: border-box; }
+        body, html {
+            height: 100%; margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background)); color: hsl(var(--foreground));
+            transition: background-color 0.3s, color 0.3s;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .booking-card {
+            background-color: hsl(var(--card));
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        .header {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-align: center;
+            color: hsl(var(--card-foreground));
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .input-group input[type="date"],
+        .input-group input[type="time"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: hsl(var(--input));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            color: hsl(var(--foreground));
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+        .input-group input:focus {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 2px;
+            border-color: hsl(var(--ring));
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.8rem 1.2rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn:disabled {
+            background-color: hsl(var(--muted));
+            cursor: not-allowed;
+            color: hsl(var(--muted-foreground));
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+        }
+        .back-btn, .theme-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            transition: background-color 0.2s;
+            color: hsl(var(--foreground));
+        }
+        .back-btn:hover, .theme-toggle-btn:hover {
+            background-color: hsl(var(--secondary));
+        }
+        .theme-toggle-btn .light-icon { display: none; }
+        .theme-toggle-btn .dark-icon { display: block; }
+        [data-theme='night'] .theme-toggle-btn .light-icon { display: block; }
+        [data-theme='night'] .theme-toggle-btn .dark-icon { display: none; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <button class="back-btn" onclick="history.back()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
+        <button id="theme-toggle-btn" class="theme-toggle-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="light-icon">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="M4.93 4.93l1.41 1.41"></path>
+                <path d="M17.66 17.66l1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="M4.93 19.07l1.41-1.41"></path>
+                <path d="M17.66 6.34l1.41-1.41"></path>
+            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dark-icon">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="container">
+        <div class="booking-card">
+            <h2 class="header">Pre-book your Ride</h2>
+            <form id="pre-book-form">
+                <div class="input-group">
+                    <label for="booking-date">Select Date</label>
+                    <input type="date" id="booking-date" name="booking-date" required />
+                </div>
+                <div class="input-group">
+                    <label for="booking-time">Select Time</label>
+                    <input type="time" id="booking-time" name="booking-time" required />
+                </div>
+                <button type="submit" class="btn">Book Now</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            function applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            }
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else {
+                applyTheme('night');
+            }
+            themeToggleBtn.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'night' ? 'day' : 'night';
+                applyTheme(newTheme);
+            });
+
+            const preBookForm = document.getElementById('pre-book-form');
+            preBookForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const date = document.getElementById('booking-date').value;
+                const time = document.getElementById('booking-time').value;
+
+                if (date && time) {
+                    const params = new URLSearchParams({ date, time });
+                    window.location.href = `booking-success.html?${params.toString()}`;
+                } else {
+                    alert('Please select a date and time.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

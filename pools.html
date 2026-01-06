@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - All Ride Pools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Re-using styles from booking.html for consistency */
+        :root { --radius: 0.5rem; }
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; --card: 222.2 84% 6.9%; --card-foreground: 210 40% 98%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --secondary-foreground: 210 40% 98%; --muted: 217.2 32.6% 17.5%; --muted-foreground: 215 20.2% 65.1%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+        [data-theme='day'] {
+            --background: 0 0% 100%; --foreground: 224 71.4% 4.9%; --card: 0 0% 100%; --card-foreground: 224 71.4% 4.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --secondary-foreground: 224 71.4% 4.9%; --muted: 210 40% 96.1%; --muted-foreground: 215.4 16.3% 46.9%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 346.8 77.2% 49.8%;
+        }
+        
+        body, html {
+            margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background)); color: hsl(var(--foreground));
+        }
+        .page-container {
+            padding: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .page-header {
+            display: flex;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid hsl(var(--border));
+            margin-bottom: 1.5rem;
+        }
+        .page-header h1 {
+            font-weight: 600;
+            font-size: 1.5rem;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+        }
+        .back-btn, .theme-toggle-btn {
+            background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: var(--radius);
+            transition: background-color 0.2s; color: hsl(var(--foreground));
+        }
+        .back-btn:hover, .theme-toggle-btn:hover { background-color: hsl(var(--secondary)); }
+        .theme-toggle-btn .light-icon { display: none; }
+        .theme-toggle-btn .dark-icon { display: block; }
+        [data-theme='night'] .theme-toggle-btn .light-icon { display: block; }
+        [data-theme='night'] .theme-toggle-btn .dark-icon { display: none; }
+
+        /* Pool Card Styles (from booking.html) */
+        .spr-pool-card {
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: box-shadow 0.2s;
+        }
+        .spr-pool-card:hover {
+            box-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+        }
+        .spr-pool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .spr-pool-header h4 {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: hsl(var(--card-foreground));
+        }
+        .spr-pool-header .price {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: hsl(var(--primary));
+        }
+        .spr-pool-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 1rem;
+        }
+        .spr-pool-seats {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.7rem 1.2rem; border-radius: var(--radius); font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s;
+        }
+        .btn-primary {
+            background-color: hsl(var(--primary)); 
+            color: hsl(var(--primary-foreground));
+        }
+        .btn[disabled] {
+            background-color: hsl(var(--muted));
+            color: hsl(var(--muted-foreground));
+            cursor: not-allowed;
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+            color: white;
+        }
+        .status-pending { background-color: #f59e0b; } /* Amber */
+        .status-accepted { background-color: #3b82f6; } /* Blue */
+
+        .btn-danger {
+            background-color: transparent;
+            color: hsl(var(--primary));
+            border: 1px solid hsl(var(--primary));
+        }
+        .btn-danger:hover {
+            background-color: hsl(var(--primary) / 0.1);
+        }
+
+        .btn-secondary {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+
+        .spr-pool-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1rem; /* Provides space between items and when they wrap */
+            margin-top: 1rem;
+        }
+
+        .spr-pool-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .share-btn-icon {
+            background-color: transparent;
+            border: 1px solid hsl(var(--border));
+            color: hsl(var(--muted-foreground));
+            padding: 0;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        .share-btn-icon:hover {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--foreground));
+            border-color: hsl(var(--secondary));
+        }
+        .share-btn-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header class="page-header">
+            <button class="back-btn" onclick="history.back()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h1>All Ride Pools</h1>
+            <button id="theme-toggle-btn" class="theme-toggle-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="light-icon"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M4.93 19.07l1.41-1.41"></path><path d="M17.66 6.34l1.41-1.41"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dark-icon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+            </button>
+        </header>
+
+        <main id="all-pools-list">
+            <!-- Pool cards will be injected here by JavaScript -->
+            <p id="no-pools-msg" style="color: hsl(var(--muted-foreground)); text-align: center; padding: 2rem;">No active pools available right now.</p>
+        </main>
+    </div>
+
+    <script src="spr-pool-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- THEME LOGIC ---
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            function applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            }
+            const savedTheme = localStorage.getItem('theme') || 'night';
+            applyTheme(savedTheme);
+            themeToggleBtn.addEventListener('click', () => {
+                const newTheme = document.documentElement.getAttribute('data-theme') === 'night' ? 'day' : 'night';
+                applyTheme(newTheme);
+            });
+
+            // --- POOL MANAGEMENT LOGIC ---
+
+            function handleJoinPool(poolId) {
+                const result = SPR_POOL_MANAGER.joinPool(poolId);
+                if (result.success) {
+                    window.location.href = 'status.html';
+                } else {
+                    alert(result.message);
+                }
+            }
+
+            function handleExitPool(poolId) {
+                // Using confirm to ask the user before exiting
+                if (confirm("Are you sure you want to leave this pool?")) {
+                    const result = SPR_POOL_MANAGER.exitPool(poolId);
+                    alert(result.message);
+                    if (result.success) {
+                        renderAllPools();
+                    }
+                }
+            }
+
+            function renderAllPools() {
+                const pools = SPR_POOL_MANAGER.getAvailablePoolsForStudent();
+                const currentUser = SPR_POOL_MANAGER.getCurrentUser();
+                const poolsListContainer = document.getElementById('all-pools-list');
+                const noPoolsMsg = document.getElementById('no-pools-msg');
+                
+                poolsListContainer.innerHTML = ''; // Clear previous list
+
+                if (pools.length === 0) {
+                    poolsListContainer.appendChild(noPoolsMsg);
+                    return;
+                }
+
+                pools.forEach(pool => {
+                    const seatsLeft = pool.capacity - pool.passengers.length;
+                    const isJoined = pool.passengers.some(p => p.userId === currentUser.userId);
+                    const isFull = seatsLeft <= 0;
+
+                    const departure = new Date(pool.departureTime);
+                    const timeString = departure.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    let statusBadge = '';
+                    if (pool.status === 'ACCEPTED') {
+                        statusBadge = `<span class="status-badge status-accepted">Driver Assigned</span>`;
+                    } else {
+                        statusBadge = `<span class="status-badge status-pending">Needs Driver</span>`;
+                    }
+
+                    let actionButtonHTML = '';
+                    if (isJoined) {
+                        actionButtonHTML = `<button class="btn btn-danger exit-pool-btn" data-pool-id="${pool.poolId}">Exit Pool</button>`;
+                    } else {
+                        actionButtonHTML = `<button class="btn btn-primary join-pool-btn" data-pool-id="${pool.poolId}" ${isFull ? 'disabled' : ''}>
+
+                                ${isFull ? 'Full' : 'Join Now'}
+                            </button>`;
+                    }
+
+                    const poolCard = document.createElement('div');
+                    poolCard.className = 'spr-pool-card';
+                    poolCard.innerHTML = `
+                        <div class="spr-pool-header">
+
+                            <h4>${pool.destination}</h4>
+                            <span class="price">₹${pool.pricePerHead}/head</span>
+                        </div>
+                        <div class="spr-pool-details">
+                            <span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ${timeString}</span>
+                            <span>${pool.pickupLocation}</span>
+                        </div>
+                        <div class="spr-pool-footer">
+                            <div class="spr-pool-seats">
+                                <span>${seatsLeft} of ${pool.capacity} seats left</span>
+                                ${statusBadge}
+                            </div>
+                            <div class="spr-pool-actions">
+                                ${actionButtonHTML}
+                                <button class="share-btn-icon share-pool-btn" data-pool-id="${pool.poolId}" title="Share Pool">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    poolsListContainer.appendChild(poolCard);
+                });
+
+                document.querySelectorAll('.join-pool-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        handleJoinPool(e.target.dataset.poolId);
+                    });
+                });
+
+                document.querySelectorAll('.exit-pool-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        handleExitPool(e.target.dataset.poolId);
+                    });
+                });
+                document.querySelectorAll('.share-pool-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        // Use e.currentTarget to ensure we get the button,
+                        // even if the user clicks the SVG icon inside it.
+                        const shareButton = e.currentTarget;
+                        const poolId = shareButton.dataset.poolId;
+                        const shareLink = `https://easyride.com/pool/${poolId}`; // Replace with your actual URL
+                        
+                        navigator.clipboard.writeText(shareLink).then(() => {
+                            alert("Link copied to clipboard!");
+                        }).catch(err => {
+                            console.error('Could not copy text: ', err);
+                            alert('Failed to copy link. Please try again.');
+                        });
+                    });
+                });
+
+            }
+
+            // Initial Load
+            SPR_POOL_MANAGER.init(); // Ensure pools are generated if needed
+            renderAllPools();
+
+            // Listen for storage changes to auto-refresh
+            window.addEventListener('storage', () => {
+                renderAllPools();
+            });
+        });
+
+        
+    </script>
+</body>
+</html>

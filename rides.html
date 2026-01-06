@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - Available Rides</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; --card: 222.2 84% 6.9%; --card-foreground: 210 40% 98%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --secondary-foreground: 210 40% 98%; --muted: 217.2 32.6% 17.5%; --muted-foreground: 215 20.2% 65.1%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+        [data-theme='day'] {
+            --background: 0 0% 100%; --foreground: 224 71.4% 4.9%; --card: 0 0% 100%; --card-foreground: 224 71.4% 4.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --secondary-foreground: 224 71.4% 4.9%; --muted: 210 40% 96.1%; --muted-foreground: 215.4 16.3% 46.9%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 346.8 77.2% 49.8%;
+        }
+        
+        /* GENERAL STYLING */
+        *, *::before, *::after { box-sizing: border-box; }
+        body, html {
+            height: 100%; margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background)); color: hsl(var(--foreground));
+            transition: background-color 0.3s, color 0.3s;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .map-container {
+            flex-shrink: 0; /* Prevent map from shrinking */
+            width: 100%;
+            background-color: hsl(var(--muted));
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .map-container iframe {
+            width: 100%;
+            height: 50vh; 
+            border: 0;
+            transition: height 0.3s ease-in-out;
+        }
+        .booking-card {
+            background-color: hsl(var(--card));
+            border-radius: var(--radius) var(--radius) 0 0;
+            padding: 1.5rem;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 2;
+            overflow-y: auto;
+            max-height: 50vh;
+        }
+        
+        /* AVAILABLE RIDES SECTION */
+        .rides-list {
+            list-style: none; padding: 0; margin: 0;
+        }
+        .ride-option {
+            display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid hsl(var(--border));
+            cursor: pointer; transition: background-color 0.2s, border-color 0.2s;
+        }
+        .ride-option:hover { background-color: hsl(var(--secondary)); }
+        .ride-option.selected { border-left: 4px solid hsl(var(--primary)); background-color: hsl(var(--secondary)); }
+        .ride-icon-btn { background: none; border: none; padding: 0; cursor: pointer; margin-right: 1rem; display: flex; align-items: center; }
+        .ride-icon-btn img { width: 32px; height: 32px; color: hsl(var(--primary)); }
+        .ride-details { flex: 1; }
+        .ride-details .vehicle-type { font-weight: 600; }
+        .ride-details .driver-info { font-size: 0.875rem; color: hsl(var(--muted-foreground)); }
+        .ride-fare { font-weight: 600; font-size: 1.1rem; color: hsl(var(--primary)); }
+        
+        .book-now-btn {
+            width: 100%; padding: 1rem; margin-top: 1.5rem; background-color: hsl(var(--muted));
+            color: hsl(var(--muted-foreground)); border: none; border-radius: var(--radius);
+            font-weight: 600; font-size: 1rem; cursor: not-allowed;
+            transition: transform 0.2s, background-color 0.2s, color 0.2s;
+        }
+        .book-now-btn:not([disabled]) {
+            background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); cursor: pointer;
+        }
+        .book-now-btn:not([disabled]):active { transform: translateY(2px); }
+
+        /* MODAL STYLING */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);
+            display: flex; align-items: center; justify-content: center; visibility: hidden;
+            opacity: 0; transition: visibility 0s, opacity 0.3s; z-index: 1000;
+        }
+        .modal.visible { visibility: visible; opacity: 1; }
+        .modal-content {
+            background-color: hsl(var(--card)); padding: 1.5rem; border-radius: var(--radius);
+            width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-align: center; position: relative;
+        }
+        .close-btn {
+            position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none;
+            color: hsl(var(--muted-foreground)); font-size: 1.5rem; cursor: pointer;
+        }
+        .modal-buttons { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+        .modal-buttons button {
+            width: 100%; padding: 1rem; border-radius: var(--radius); font-weight: 600;
+            font-size: 1rem; cursor: pointer; transition: background-color 0.2s, transform 0.2s;
+        }
+        #book-now-option { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border: none; }
+        
+        .back-btn, .theme-toggle-btn {
+            background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: var(--radius);
+            transition: background-color 0.2s; color: hsl(var(--foreground));
+        }
+        .back-btn:hover, .theme-toggle-btn:hover { background-color: hsl(var(--secondary)); }
+        .theme-toggle-btn .light-icon { display: none; }
+        .theme-toggle-btn .dark-icon { display: block; }
+        [data-theme='night'] .theme-toggle-btn .light-icon { display: block; }
+        [data-theme='night'] .theme-toggle-btn .dark-icon { display: none; }
+
+        /* CONFIRMATION PAGE */
+        #confirmation-page {
+            position: fixed; bottom: -100%; left: 0; width: 100%; background-color: hsl(var(--card));
+            color: hsl(var(--foreground)); padding: 1.5rem; border-radius: 1rem 1rem 0 0;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.2); z-index: 100; transition: bottom 0.5s ease-in-out;
+            text-align: center; display: flex; flex-direction: column; gap: 1.5rem;
+        }
+        #confirmation-page.visible { bottom: 0; }
+        .loading-bar-container { width: 100%; background-color: hsl(var(--muted)); border-radius: var(--radius); height: 0.5rem; overflow: hidden; }
+        .loading-bar { height: 100%; width: 0%; background-color: hsl(var(--primary)); }
+        @keyframes fill-loading-bar { from { width: 0%; } to { width: 100%; } }
+        .loading-bar.animate { animation: fill-loading-bar 5s forwards; }
+        
+        /* --- MODIFIED CSS FOR WAITING PAGE --- */
+        #waiting-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: hsl(var(--background));
+            z-index: 200;
+            display: none; /* Changed by JS to flex */
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 1rem;
+            overflow-y: auto; /* This enables scrolling */
+        }
+        /* --- END MODIFIED CSS --- */
+
+        #waiting-page.visible {
+            display: flex;
+        }
+        .wait-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            flex-shrink: 0;
+        }
+        .notification-bar {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 400px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+        .ride-summary {
+            background-color: hsl(var(--card));
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1rem; /* Add margin at the bottom */
+            flex-shrink: 0;
+        }
+        .driver-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: hsl(var(--secondary));
+            border-radius: var(--radius);
+        }
+        .driver-avatar {
+            width: 60px; height: 60px; border-radius: 50%; background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground)); font-size: 1.5rem; font-weight: 600;
+            display: flex; align-items: center; justify-content: center;
+        }
+        /* --- New Passenger Info Styles --- */
+        .passenger-info {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid hsl(var(--border));
+            text-align: center
+        }
+        #passenger-status {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: hsl(var(--card-foreground));
+        }
+        .student-profiles {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .student-profile {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: 2px solid hsl(var(--border));
+        }
+        .cancel-ride-btn {
+            width: 100%; padding: 1rem; background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground)); border: 1px solid hsl(var(--border));
+            border-radius: var(--radius); font-weight: 600; cursor: pointer;
+            transition: background-color 0.2s; margin-top: 1.5rem;
+        }
+        .cancel-ride-btn:hover { background-color: hsl(var(--border)); }
+
+        .action-buttons-container {
+            display: flex; gap: 1rem; margin-top: 1.5rem;
+        }
+        .action-btn {
+            flex: 1; padding: 1rem; border-radius: var(--radius); font-weight: 600; font-size: 1rem;
+            cursor: pointer; transition: background-color 0.2s, transform 0.2s; border: none;
+        }
+        .action-btn.primary { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+        .action-btn.secondary { background-color: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border: 1px solid hsl(var(--border)); }
+        .action-btn:active { transform: translateY(2px); }
+
+        /* Floating Chat Button */
+        .chat-fab {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: 56px;
+            height: 56px;
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 99; /* Below modals and confirmation pages */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            text-decoration: none;
+        }
+        .chat-fab:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+        }
+        .chat-fab svg {
+            width: 28px;
+            height: 28px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="main-content" id="main-content">
+        <div style="display:flex; justify-content: space-between; align-items: center; padding: 1rem;">
+            <button class="back-btn" onclick="history.back()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button id="theme-toggle-btn" class="theme-toggle-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="light-icon"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M4.93 19.07l1.41-1.41"></path><path d="M17.66 6.34l1.41-1.41"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dark-icon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+            </button>
+        </div>
+    
+        <div class="map-container" id="map-container">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3877.566252155196!2d79.28719237490495!3d13.62328258675526!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bb2b511cbefcaf3%3A0x4eb0b29e1d33b522!2sMohan%20Babu%20University!5e0!3m2!1sen!2sin!4v1757581177085!5m2!1sen!2sin" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+    
+        <div class="booking-card" id="booking-card">
+            <div class="header">Available Autos</div>
+            <ul class="rides-list">
+                <li class="ride-option" data-ride-type="Auto" data-distance="1.2 km" data-rider-name="Babu G" data-rider-initials="BG">
+                    <button class="ride-icon-btn"><img src="auto1.png" alt="auto-icon"></button>
+                    <div class="ride-details">
+                        <div class="vehicle-type">Auto</div>
+                        <div class="driver-info">Babu G - 5 mins away</div>
+                    </div>
+                    <span class="ride-fare">₹75</span>
+                </li>
+                <li class="ride-option" data-ride-type="Auto XL" data-distance="2.1 km" data-rider-name="Ravi V" data-rider-initials="RV">
+                    <button class="ride-icon-btn"><img src="auto1.png" alt="auto-icon"></button>
+                    <div class="ride-details">
+                        <div class="vehicle-type">Auto XL</div>
+                        <div class="driver-info">Ravi V - 8 mins away</div>
+                    </div>
+                    <span class="ride-fare">₹35 per head</span>
+                </li>
+            </ul>
+            <button class="book-now-btn" disabled>Book Now</button>
+        </div>
+
+        <div id="booking-options-modal" class="modal">
+            <div class="modal-content">
+                <button class="close-btn" id="close-booking-modal-btn">×</button>
+                <h3>Please re-check and confirm?</h3>
+                <div class="modal-buttons">
+                    <button id="book-now-option">Confirm Booking</button>
+                </div>
+            </div>
+        </div>
+    
+        <div id="confirmation-page">
+            <h3 id="confirm-title">Connecting to a Rider...</h3>
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loading-bar"></div>
+            </div>
+            <p>Please wait while we find the best ride for you.</p>
+            <button class="cancel-ride-btn" id="cancel-ride-btn-confirm">Cancel Ride</button>
+        </div>
+    </div>
+    
+    <div id="waiting-page">
+        <div class="wait-header">
+            <button class="back-btn" id="waiting-back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button id="theme-toggle-btn-wait" class="theme-toggle-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="light-icon"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M4.93 19.07l1.41-1.41"></path><path d="M17.66 6.34l1.41-1.41"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dark-icon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+            </button>
+        </div>
+
+        <div class="map-container" style="min-height: 40vh; width: 100%;">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3877.566252155196!2d79.28719237490495!3d13.62328258675526!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bb2b511cbefcaf3%3A0x4eb0b29e1d33b522!2sMohan%20Babu%20University!5e0!3m2!1sen!2sin!4v1757581177085!5m2!1sen!2sin" width="600" height="450" style="border:0; height: 100%;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+
+        <div class="notification-bar" id="notification-bar">Your ride is 5 minutes away!</div>
+        
+        <div class="ride-summary">
+            <h3 id="waiting-ride-type"></h3>
+            <p id="waiting-fare"></p>
+            <div class="driver-card">
+                <div class="driver-avatar" id="waiting-driver-initials"></div>
+                <div class="driver-info-text">
+                    <h4 id="waiting-driver-name"></h4>
+                    <p>Auto driver</p>
+                </div>
+            </div>
+            <div class="passenger-info">
+                <div id="passenger-status"></div>
+                <div id="student-profiles" class="student-profiles"></div>
+            </div>
+            
+            <div class="action-buttons-container">
+                <button id="pay-online-btn" class="action-btn primary">Pay Online</button>
+                <button id="new-cancel-ride-btn" class="action-btn secondary">Cancel Ride</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <a href="chat.html" class="chat-fab" aria-label="Open AI Assistant">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    </a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggleBtnMain = document.getElementById('theme-toggle-btn');
+            const themeToggleBtnWait = document.getElementById('theme-toggle-btn-wait');
+            
+            function applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            }
+
+            const savedTheme = localStorage.getItem('theme') || 'night';
+            applyTheme(savedTheme);
+
+            function toggleTheme() {
+                const newTheme = document.documentElement.getAttribute('data-theme') === 'night' ? 'day' : 'night';
+                applyTheme(newTheme);
+            }
+            
+            if (themeToggleBtnMain) themeToggleBtnMain.addEventListener('click', toggleTheme);
+            if (themeToggleBtnWait) themeToggleBtnWait.addEventListener('click', toggleTheme);
+
+            const mainContent = document.getElementById('main-content');
+            const rideOptions = document.querySelectorAll('.ride-option');
+            const bookNowBtn = document.querySelector('.book-now-btn');
+            const bookingOptionsModal = document.getElementById('booking-options-modal');
+            const closeBookingModalBtn = document.getElementById('close-booking-modal-btn');
+            const bookNowOptionBtn = document.getElementById('book-now-option');
+            const confirmationPage = document.getElementById('confirmation-page');
+            const loadingBar = document.getElementById('loading-bar');
+            const cancelRideBtnConfirm = document.getElementById('cancel-ride-btn-confirm');
+            const waitingPage = document.getElementById('waiting-page');
+            
+            const payOnlineBtn = document.getElementById('pay-online-btn');
+            const newCancelRideBtn = document.getElementById('new-cancel-ride-btn');
+
+            let selectedRide = null;
+            
+            function cancelAndGoToBooking() {
+                alert("Ride got cancelled");
+                window.location.href = 'booking.html'; 
+            }
+
+            rideOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    rideOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    selectedRide = {
+                        type: option.dataset.rideType,
+                        name: option.dataset.riderName,
+                        initials: option.dataset.riderInitials,
+                        fare: option.querySelector('.ride-fare').textContent
+                    };
+                    bookNowBtn.disabled = false;
+                });
+            });
+
+            bookNowBtn.addEventListener('click', () => {
+                if (selectedRide) bookingOptionsModal.classList.add('visible');
+            });
+
+            closeBookingModalBtn.addEventListener('click', () => bookingOptionsModal.classList.remove('visible'));
+            
+            bookNowOptionBtn.addEventListener('click', () => {
+                bookingOptionsModal.classList.remove('visible');
+                confirmationPage.classList.add('visible');
+                loadingBar.classList.add('animate');
+                setTimeout(showWaitingPage, 5000); 
+            });
+
+            cancelRideBtnConfirm.addEventListener('click', () => {
+                confirmationPage.classList.remove('visible');
+                loadingBar.classList.remove('animate');
+                cancelAndGoToBooking();
+            });
+            
+            payOnlineBtn.addEventListener('click', () => {
+                window.location.href = 'payment.html';
+            });
+
+            newCancelRideBtn.addEventListener('click', () => {
+                cancelAndGoToBooking();
+            });
+            
+            function showWaitingPage() {
+                mainContent.style.display = 'none';
+                waitingPage.classList.add('visible');
+                document.getElementById('waiting-ride-type').textContent = selectedRide.type;
+                document.getElementById('waiting-fare').textContent = selectedRide.fare;
+                document.getElementById('waiting-driver-initials').textContent = selectedRide.initials;
+                document.getElementById('waiting-driver-name').textContent = selectedRide.name;
+                const passengerStatus = document.getElementById('passenger-status');
+                const studentProfiles = document.getElementById('student-profiles');
+                if (selectedRide.type === 'Auto XL') {
+                    passengerStatus.textContent = 'Shared with 2 students';
+                    studentProfiles.innerHTML = `<div class="student-profile">SA</div><div class="student-profile">PK</div>`;
+                } else {
+                    passengerStatus.textContent = 'You are travelling alone';
+                    studentProfiles.innerHTML = '';
+                }
+            }
+
+            document.getElementById('waiting-back-btn').addEventListener('click', () => {
+                waitingPage.classList.remove('visible');
+                mainContent.style.display = 'flex';
+                rideOptions.forEach(option => option.classList.remove('selected'));
+                bookNowBtn.disabled = true;
+                selectedRide = null;
+            });
+        });
+    </script>
+</body>
+</html>

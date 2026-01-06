@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - Available Buses</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; --card: 222.2 84% 6.9%; --card-foreground: 210 40% 98%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --secondary-foreground: 210 40% 98%; --muted: 217.2 32.6% 17.5%; --muted-foreground: 215 20.2% 65.1%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+        [data-theme='day'] {
+            --background: 0 0% 100%; --foreground: 224 71.4% 4.9%; --card: 0 0% 100%; --card-foreground: 224 71.4% 4.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --secondary-foreground: 224 71.4% 4.9%; --muted: 210 40% 96.1%; --muted-foreground: 215.4 16.3% 46.9%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 346.8 77.2% 49.8%;
+        }
+        
+        /* GENERAL STYLING */
+        *, *::before, *::after { box-sizing: border-box; }
+        body, html {
+            height: 100%; margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background)); color: hsl(var(--foreground));
+            transition: background-color 0.3s, color 0.3s;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        .map-container {
+            flex: 1;
+            width: 100%;
+            background-color: hsl(var(--muted));
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .map-container iframe {
+            width: 100%;
+            height: 100vh;
+            border: 0;
+            transition: height 0.3s ease-in-out;
+        }
+
+        .booking-card {
+            background-color: hsl(var(--card));
+            border-radius: var(--radius) var(--radius) 0 0;
+            padding: 1.5rem;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 2;
+            overflow-y: auto;
+            max-height: 50vh;
+        }
+        .header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: hsl(var(--card-foreground));
+        }
+        
+        /* AVAILABLE BUSES SECTION */
+        .rides-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .ride-option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid hsl(var(--border));
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .ride-option:hover {
+            background-color: hsl(var(--secondary));
+        }
+        .ride-option.selected {
+            border-left: 4px solid hsl(var(--primary));
+            background-color: hsl(var(--secondary));
+        }
+        .bus-icon-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            margin-right: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        .bus-icon-btn img {
+            width: 32px;
+            height: 32px;
+        }
+        .ride-details {
+            flex: 1;
+        }
+        .ride-details .vehicle-type {
+            font-weight: 600;
+        }
+        .ride-details .driver-info {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .ride-fare {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: hsl(var(--primary));
+        }
+        
+        .book-now-btn {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            background-color: hsl(var(--muted));
+            color: hsl(var(--muted-foreground));
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: not-allowed;
+            transition: transform 0.2s, background-color 0.2s, color 0.2s;
+        }
+        .book-now-btn:not([disabled]) {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            cursor: pointer;
+        }
+        .book-now-btn:not([disabled]):active {
+            transform: translateY(2px);
+        }
+
+        /* SCROLLING STYLES */
+        body.map-compressed .map-container iframe {
+            height: 30vh;
+        }
+        body.map-compressed .booking-card {
+            border-radius: 0;
+        }
+        .booking-card {
+            max-height: calc(100vh - 5rem);
+            border-radius: var(--radius) var(--radius) 0 0;
+            transition: max-height 0.3s ease-in-out;
+        }
+
+        /* MODAL STYLES */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s;
+            z-index: 1000;
+        }
+        .modal.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background-color: hsl(var(--card));
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+        }
+        .modal-content h3 {
+            margin-top: 0;
+        }
+        .close-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            color: hsl(var(--muted-foreground));
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .back-btn, .theme-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            transition: background-color 0.2s;
+            color: hsl(var(--foreground));
+        }
+        .back-btn:hover, .theme-toggle-btn:hover {
+            background-color: hsl(var(--secondary));
+        }
+        .theme-toggle-btn .light-icon { display: none; }
+        .theme-toggle-btn .dark-icon { display: block; }
+        [data-theme='night'] .theme-toggle-btn .light-icon { display: block; }
+        [data-theme='night'] .theme-toggle-btn .dark-icon { display: none; }
+    </style>
+</head>
+<body>
+    <div style="display:flex; justify-content: space-between; align-items: center; padding: 1rem;">
+        <button class="back-btn" onclick="history.back()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
+        <button id="theme-toggle-btn" class="theme-toggle-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="light-icon">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="M4.93 4.93l1.41 1.41"></path>
+                <path d="M17.66 17.66l1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="M4.93 19.07l1.41-1.41"></path>
+                <path d="M17.66 6.34l1.41-1.41"></path>
+            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dark-icon">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="map-container" id="map-container">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15444.62953284065!2d79.4005089!3d13.62881!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a4d4b1a41e97c9b%3A0xc6c4d7e974911d33!2sTirupati%2C%20Andhra%20Pradesh!5e0!3m2!1sen!2sin!4v1692135084931!5m2!1sen!2sin" width="100%" height="100vh" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+
+    <div class="booking-card" id="booking-card">
+        <div class="header">Available Buses</div>
+        <ul class="rides-list">
+            <li class="ride-option" data-bus-type="APSRTC" data-rating="4.2" data-pickup-distance="1.1 km">
+                <button class="bus-icon-btn">
+                    <img src="bus.png" alt="Bus Icon">
+                </button>
+                <div class="ride-details">
+                    <div class="vehicle-type">Ordinary Bus</div>
+                    <div class="driver-info">Pickup distance: 1.1 km</div>
+                </div>
+                <span class="ride-fare">₹30</span>
+            </li>
+            <li class="ride-option" data-bus-type="APSRTC" data-rating="4.5" data-pickup-distance="0.5 km">
+                <button class="bus-icon-btn">
+                    <img src="bus.png" alt="Bus Icon">
+                </button>
+                <div class="ride-details">
+                    <div class="vehicle-type">City Express</div>
+                    <div class="driver-info">Pickup distance: 0.5 km</div>
+                </div>
+                <span class="ride-fare">₹45</span>
+            </li>
+            <li class="ride-option" data-bus-type="Private" data-rating="4.8" data-pickup-distance="2.3 km">
+                <button class="bus-icon-btn">
+                    <img src="bus.png" alt="Bus Icon">
+                </button>
+                <div class="ride-details">
+                    <div class="vehicle-type">Private Bus</div>
+                    <div class="driver-info">Pickup distance: 2.3 km</div>
+                </div>
+                <span class="ride-fare">₹60</span>
+            </li>
+        </ul>
+        <button class="book-now-btn" disabled>Book Now</button>
+    </div>
+    
+    <div id="bus-details-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" id="close-modal-btn">×</button>
+            <h3 id="modal-bus-type"></h3>
+            <p>Rating: <span id="modal-rating"></span>⭐</p>
+        </div>
+    </div>
+    
+    <!-- Floating Chat Button -->
+    <a href="chat.html" class="chat-fab" aria-label="Open AI Assistant">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    </a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            
+            // Function to apply the theme
+            function applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            }
+
+            // Check for saved theme on page load
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else {
+                // Default theme if no preference is saved
+                applyTheme('night');
+            }
+
+            // Toggle theme on button click
+            themeToggleBtn.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'night' ? 'day' : 'night';
+                applyTheme(newTheme);
+            });
+            
+            // Rest of your existing scripts
+            const mapContainer = document.getElementById('map-container');
+            const rideOptions = document.querySelectorAll('.ride-option');
+            const bookNowBtn = document.querySelector('.book-now-btn');
+            const modal = document.getElementById('bus-details-modal');
+            const modalBusType = document.getElementById('modal-bus-type');
+            const modalRating = document.getElementById('modal-rating');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            
+            mapContainer.style.height = '100vh';
+            
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    document.body.classList.add('map-compressed');
+                } else {
+                    document.body.classList.remove('map-compressed');
+                }
+            });
+
+            rideOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    rideOptions.forEach(otherOption => {
+                        otherOption.classList.remove('selected');
+                    });
+                    option.classList.add('selected');
+                    bookNowBtn.disabled = false;
+                });
+            });
+
+            document.querySelectorAll('.bus-icon-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const parentLi = button.closest('.ride-option');
+                    const busType = parentLi.dataset.busType;
+                    const rating = parentLi.dataset.rating;
+                    
+                    modalBusType.textContent = busType;
+                    modalRating.textContent = rating;
+                    
+                    modal.classList.add('visible');
+                });
+            });
+
+            closeModalBtn.addEventListener('click', () => {
+                modal.classList.remove('visible');
+            });
+            window.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.classList.remove('visible');
+                }
+            });
+
+            bookNowBtn.addEventListener('click', () => {
+                if (!bookNowBtn.disabled) {
+                    alert('Booking Confirmed! Your bus ride is on the way.');
+                }
+            });
+        });
+    </script>
+</head>
+</html>

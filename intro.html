@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - Welcome</title>
+    <meta name="description" content="Welcome to EasyRide, your campus ride service." />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        /* Light text colors */
+        :root[data-theme='morning'],
+        :root[data-theme='afternoon'] {
+            --foreground: 222.2 84% 4.9%;
+            --card-foreground: 222.2 84% 4.9%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted-foreground: 215 20.2% 65.1%;
+        }
+
+        /* Dark text colors */
+        :root[data-theme='evening'],
+        :root[data-theme='night'] {
+            --foreground: 210 40% 98%;
+            --card-foreground: 210 40% 98%;
+            --secondary-foreground: 210 40% 98%;
+            --muted-foreground: 215 20.2% 65.1%;
+        }
+        
+        /* Morning theme colors */
+        [data-theme='morning'] {
+            --background: 210 40% 98%; --card: 210 40% 96.1%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --muted: 210 40% 96.1%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 222.2 84% 4.9%;
+        }
+        /* Afternoon theme colors */
+        [data-theme='afternoon'] {
+            --background: 20 14.3% 95.9%; --card: 16 12.3% 93.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 4.8% 95.9%; --muted: 240 4.8% 95.9%; --border: 240 5.9% 90%; --input: 240 5.9% 90%; --ring: 240 5.9% 10%;
+        }
+        /* Evening theme colors */
+        [data-theme='evening'] {
+            --background: 240 10% 3.9%; --card: 240 10% 8.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 3.7% 15.9%; --muted: 240 3.7% 15.9%; --border: 240 3.7% 15.9%; --input: 240 3.7% 15.9%; --ring: 346.8 77.2% 49.8%;
+        }
+        /* Night theme colors */
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --card: 222.2 84% 6.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --muted: 217.2 32.6% 17.5%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+
+        /* * GENERAL STYLING */
+        *, *::before, *::after { box-sizing: border-box; }
+        body, html {
+            height: 100%; margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background)); color: hsl(var(--foreground));
+            transition: background-color 0.3s, color 0.3s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 2rem 1rem;
+        }
+
+        .logo { font-size: 2.5rem; font-weight: 700; color: hsl(var(--primary)); margin-bottom: 0.5rem; }
+        .tagline { font-size: 1.25rem; color: hsl(var(--muted-foreground)); margin-bottom: 2rem; }
+        .theme-toggle-btn { position: fixed; top: 1rem; right: 1rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background-color: hsl(var(--card)); color: hsl(var(--foreground)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); cursor: pointer; transition: background-color 0.2s, transform 0.2s; }
+        .theme-toggle-btn:hover { background-color: hsl(var(--secondary)); }
+        .theme-toggle-btn:active { transform: scale(0.95); }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;">
+        <h1 class="logo">EasyRide</h1>
+        <p class="tagline">Your next journey awaits. </p>
+        <p id="redirect-message" style="margin-top: 2rem; color: hsl(var(--muted-foreground)); animation: pulse 2s infinite;">Redirecting you to the app in a moment...</p>
+    </div>
+    
+    <button id="theme-toggle" class="theme-toggle-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const uiElements = {
+                themeToggle: document.getElementById('theme-toggle'),
+            };
+
+            const themes = ['morning', 'afternoon', 'evening', 'night'];
+
+            const applyTheme = (theme) => {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            };
+
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else {
+                applyTheme('night');
+            }
+
+            uiElements.themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const currentIndex = themes.indexOf(currentTheme);
+                const nextIndex = (currentIndex + 1) % themes.length;
+                const newTheme = themes[nextIndex];
+                applyTheme(newTheme);
+            });
+
+            // Redirect after 3 seconds
+            setTimeout(() => {
+                window.location.href = 'initial.html';
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

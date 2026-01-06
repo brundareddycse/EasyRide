@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - Create a Ride Pool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Re-using styles for consistency */
+        :root { --radius: 0.5rem; }
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; --card: 222.2 84% 6.9%; --card-foreground: 210 40% 98%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --secondary-foreground: 210 40% 98%; --muted: 217.2 32.6% 17.5%; --muted-foreground: 215 20.2% 65.1%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+        [data-theme='day'] {
+            --background: 0 0% 100%; --foreground: 224 71.4% 4.9%; --card: 0 0% 100%; --card-foreground: 224 71.4% 4.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --secondary-foreground: 224 71.4% 4.9%; --muted: 210 40% 96.1%; --muted-foreground: 215.4 16.3% 46.9%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 346.8 77.2% 49.8%;
+        }
+        
+        body, html {
+            margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background)); color: hsl(var(--foreground));
+        }
+        .page-container {
+            padding: 1rem; max-width: 800px; margin: 0 auto;
+        }
+        .page-header {
+            display: flex; align-items: center; padding-bottom: 1rem;
+            border-bottom: 1px solid hsl(var(--border)); margin-bottom: 1.5rem;
+        }
+        .page-header h1 {
+            font-weight: 600; font-size: 1.5rem; margin: 0;
+            flex-grow: 1; text-align: center;
+        }
+        .back-btn {
+            background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: var(--radius);
+            transition: background-color 0.2s; color: hsl(var(--foreground));
+        }
+        .back-btn:hover { background-color: hsl(var(--secondary)); }
+
+        .form-card {
+            background-color: hsl(var(--card));
+            padding: 2rem;
+            border-radius: var(--radius);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative; /* Needed for suggestions dropdown */
+        }
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: hsl(var(--input));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            color: hsl(var(--foreground));
+            font-size: 1rem;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        .form-group select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1em;
+            padding-right: 2.5rem;
+        }
+        .form-group input:focus {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 2px;
+            border-color: hsl(var(--ring));
+        }
+        /* New styles for suggestions */
+        .location-suggestions {
+            position: absolute;
+            width: 100%;
+            top: 100%; /* Position it right below the input */
+            left: 0;
+            z-index: 10;
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            margin-top: 0.25rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none; /* Hidden by default */
+        }
+        .suggestion-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            color: hsl(var(--foreground));
+            transition: background-color 0.2s;
+        }
+        .suggestion-item:hover {
+            background-color: hsl(var(--muted));
+        }
+        .suggestion-item:not(:last-child) {
+            border-bottom: 1px solid hsl(var(--border));
+        }
+        .btn-primary {
+            width: 100%; display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.8rem 1.2rem; border-radius: var(--radius); font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s;
+            background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground));
+        }
+        .info-message {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header class="page-header">
+            <button class="back-btn" onclick="history.back()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h1>Create a New Ride Pool</h1>
+        </header>
+
+        <main>
+            <form id="create-pool-form" class="form-card">
+                <div class="form-group">
+                    <label for="pickup-location">Pickup Location</label>
+                    <input type="text" id="pickup-location" placeholder="Type or select a pickup spot" required autocomplete="off">
+                    <div id="pickup-suggestions" class="location-suggestions"></div>
+                </div>
+                <div class="form-group">
+                    <label for="destination">Destination</label>
+                    <input type="text" id="destination" placeholder="Type or select a destination" required autocomplete="off">
+                    <div id="destination-suggestions" class="location-suggestions"></div>
+                </div>
+                <div class="form-group">
+                    <label for="departure-date">Date</label>
+                    <input type="date" id="departure-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="departure-time">Time</label>
+                    <input type="time" id="departure-time" required>
+                </div>
+                <button type="submit" class="btn-primary">Create Pool</button>
+            </form>
+            <div class="info-message">
+                A minimum of 4 students should join the pool for it to get activated.
+            </div>
+        </main>
+    </div>
+
+    <script src="spr-pool-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set minimum date to today
+            const dateInput = document.getElementById('departure-date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+
+            // --- Pickup Location Search Logic ---
+            const pickupInput = document.getElementById('pickup-location');
+            const pickupSuggestionsContainer = document.getElementById('pickup-suggestions');
+            const predefinedPickupLocations = [
+                "MBU Main Gate",
+                "MBU Yellow Gate",
+                "MBU Boys Hostel",
+                "MBU Girls Hostel"
+            ];
+
+            // --- Destination Search Logic ---
+            const destinationInput = document.getElementById('destination');
+            const suggestionsContainer = document.getElementById('destination-suggestions');
+            const predefinedLocations = [
+                "MBU Main Gate",
+                "MBU Yellow Gate",
+                "Tirupati Railway Station",
+                "Tirupati Bus Stand",
+                "Kapila Theertham",
+                "ISKON Temple, Tirupati",
+                "Sri Venkateswara Zoological Park"
+            ];
+
+            function setupSuggestions(inputElement, suggestionsElement, locations) {
+                function showSuggestions(query) {
+                    suggestionsElement.innerHTML = '';
+                    const filteredLocations = locations.filter(location => 
+                        location.toLowerCase().includes(query.toLowerCase())
+                    );
+
+                    if (filteredLocations.length > 0) {
+                        filteredLocations.forEach(location => {
+                            const suggestionItem = document.createElement('div');
+                            suggestionItem.textContent = location;
+                            suggestionItem.classList.add('suggestion-item');
+                            suggestionItem.addEventListener('click', () => {
+                                inputElement.value = location;
+                                suggestionsElement.style.display = 'none';
+                            });
+                            suggestionsElement.appendChild(suggestionItem);
+                        });
+                        suggestionsElement.style.display = 'block';
+                    } else {
+                        suggestionsElement.style.display = 'none';
+                    }
+                }
+
+                inputElement.addEventListener('input', () => {
+                    showSuggestions(inputElement.value);
+                });
+
+                inputElement.addEventListener('focus', () => {
+                    if (inputElement.value === '') {
+                        showSuggestions('');
+                    }
+                });
+            }
+
+            setupSuggestions(pickupInput, pickupSuggestionsContainer, predefinedPickupLocations);
+            setupSuggestions(destinationInput, suggestionsContainer, predefinedLocations);
+
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!destinationInput.contains(e.target) && !suggestionsContainer.contains(e.target) &&
+                    !pickupInput.contains(e.target) && !pickupSuggestionsContainer.contains(e.target)) {
+                    pickupSuggestionsContainer.style.display = 'none';
+                    suggestionsContainer.style.display = 'none';
+                }
+            });
+
+            // --- Form Submission Logic ---
+            const form = document.getElementById('create-pool-form');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const pickupLocation = document.getElementById('pickup-location').value;
+                const destination = document.getElementById('destination').value;
+                const date = document.getElementById('departure-date').value;
+                const time = document.getElementById('departure-time').value;
+
+                // Combine date and time into a single ISO string
+                const departureDateTime = new Date(`${date}T${time}`);
+
+                const poolData = {
+                    pickupLocation: pickupLocation,
+                    destination: destination,
+                    departureTime: departureDateTime.toISOString()
+                };
+
+                const result = SPR_POOL_MANAGER.createPool(poolData);
+                alert(result.message);
+
+                if (result.success) {
+                    // Redirect back to the booking page
+                    window.location.href = 'booking.html';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

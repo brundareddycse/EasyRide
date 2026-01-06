@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EasyRide - Bookings</title>
+    <meta name="description" content="Book a ride for someone else with EasyRide." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* * THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        
+        /* Light text colors */
+        :root[data-theme='morning'],
+        :root[data-theme='afternoon'] {
+            --foreground: 222.2 84% 4.9%;
+            --card-foreground: 222.2 84% 4.9%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted-foreground: 215 20.2% 65.1%;
+        }
+
+        /* Dark text colors */
+        :root[data-theme='evening'],
+        :root[data-theme='night'] {
+            --foreground: 210 40% 98%;
+            --card-foreground: 210 40% 98%;
+            --secondary-foreground: 210 40% 98%;
+            --muted-foreground: 215 20.2% 65.1%;
+        }
+        
+        /* Morning theme colors */
+        [data-theme='morning'] {
+            --background: 210 40% 98%; --card: 210 40% 96.1%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --muted: 210 40% 96.1%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 222.2 84% 4.9%;
+        }
+        /* Afternoon theme colors */
+        [data-theme='afternoon'] {
+            --background: 20 14.3% 95.9%; --card: 16 12.3% 93.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 4.8% 95.9%; --muted: 240 4.8% 95.9%; --border: 240 5.9% 90%; --input: 240 5.9% 90%; --ring: 240 5.9% 10%;
+        }
+        /* Evening theme colors */
+        [data-theme='evening'] {
+            --background: 240 10% 3.9%; --card: 240 10% 8.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 240 3.7% 15.9%; --muted: 240 3.7% 15.9%; --border: 240 3.7% 15.9%; --input: 240 3.7% 15.9%; --ring: 346.8 77.2% 49.8%;
+        }
+        /* Night theme colors */
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --card: 222.2 84% 6.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --muted: 217.2 32.6% 17.5%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+
+        /* * GENERAL STYLING */
+        *, *::before, *::after { box-sizing: border-box; }
+        body, html {
+            height: 100%; margin: 0; font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background)); color: hsl(var(--foreground));
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh; padding: 2rem 1rem;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 1rem;
+            margin: auto;
+        }
+
+        .card {
+            background-color: hsl(var(--card));
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            background-color: hsl(var(--input));
+            color: hsl(var(--foreground));
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--foreground));
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        /* Action buttons in the corners */
+        .action-btn { 
+            position: fixed; 
+            width: 40px; 
+            height: 40px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background-color: hsl(var(--card)); 
+            color: hsl(var(--foreground)); 
+            border: 1px solid hsl(var(--border)); 
+            border-radius: var(--radius); 
+            cursor: pointer; 
+            transition: background-color 0.2s, transform 0.2s; 
+        }
+        .action-btn:hover { 
+            background-color: hsl(var(--secondary)); 
+        }
+        .action-btn:active { 
+            transform: scale(0.95); 
+        }
+
+        .back-btn {
+            top: 1rem; 
+            left: 1rem;
+        }
+
+        .theme-toggle-btn { 
+            top: 1rem; 
+            right: 1rem; 
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background-color: hsl(var(--card));
+            padding: 2rem;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 400px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+            position: relative;
+            text-align: center;
+        }
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: hsl(var(--muted-foreground));
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 1.5rem;
+            text-align: center;
+        }
+        .modal-body p {
+            margin-bottom: 1rem;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1 class="section-title">Book a Ride for Someone</h1>
+            <form id="booking-form">
+                <div class="form-group">
+                    <label for="passenger-name">Passenger's Name</label>
+                    <input type="text" id="passenger-name" placeholder="Enter name" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone-number">Phone Number</label>
+                    <input type="tel" id="phone-number" placeholder="Enter phone number" required>
+                </div>
+                <div class="form-group">
+                    <label for="pickup-location">Pickup Location</label>
+                    <input type="text" id="pickup-location" placeholder="Enter pickup address" required>
+                </div>
+                <div class="form-group">
+                    <label for="destination">Destination</label>
+                    <input type="text" id="destination" placeholder="Enter destination address" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Book Ride</button>
+            </form>
+        </div>
+    </div>
+    
+    <button id="back-btn" class="action-btn back-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <button id="theme-toggle" class="action-btn theme-toggle-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+
+    <!-- Generic Message Modal -->
+    <div class="modal-overlay" id="message-modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="message-modal-close-btn">&times;</button>
+            <h3 class="modal-title" id="message-modal-title">Message</h3>
+            <div class="modal-body">
+                <p id="message-modal-text"></p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="copy-btn">Copy Details</button>
+                <button class="btn btn-primary" id="message-modal-ok-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const uiElements = {
+                backBtn: document.getElementById('back-btn'),
+                themeToggle: document.getElementById('theme-toggle'),
+                bookingForm: document.getElementById('booking-form'),
+                passengerNameInput: document.getElementById('passenger-name'),
+                phoneNumberInput: document.getElementById('phone-number'),
+                pickupLocationInput: document.getElementById('pickup-location'),
+                destinationInput: document.getElementById('destination'),
+                messageModal: document.getElementById('message-modal'),
+                messageModalCloseBtn: document.getElementById('message-modal-close-btn'),
+                messageModalOkBtn: document.getElementById('message-modal-ok-btn'),
+                messageModalTitle: document.getElementById('message-modal-title'),
+                messageModalText: document.getElementById('message-modal-text'),
+                copyBtn: document.getElementById('copy-btn')
+            };
+
+            // Theme toggle logic
+            const themes = ['morning', 'afternoon', 'evening', 'night'];
+            const applyTheme = (theme) => {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            };
+
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else {
+                applyTheme('night');
+            }
+
+            uiElements.themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const currentIndex = themes.indexOf(currentTheme);
+                const nextIndex = (currentIndex + 1) % themes.length;
+                const newTheme = themes[nextIndex];
+                applyTheme(newTheme);
+            });
+
+            // Back button logic
+            uiElements.backBtn.addEventListener('click', () => {
+                window.history.back();
+            });
+
+            // Generic message modal logic
+            const showMessageModal = (title, message) => {
+                uiElements.messageModalTitle.textContent = title;
+                uiElements.messageModalText.textContent = message;
+                uiElements.messageModal.classList.add('open');
+                uiElements.copyBtn.style.display = 'inline-block';
+            };
+
+            const closeMessageModal = () => {
+                uiElements.messageModal.classList.remove('open');
+            };
+
+            uiElements.messageModalCloseBtn.addEventListener('click', closeMessageModal);
+            uiElements.messageModalOkBtn.addEventListener('click', closeMessageModal);
+
+            // Copy to clipboard logic
+            uiElements.copyBtn.addEventListener('click', () => {
+                const textToCopy = uiElements.messageModalText.textContent;
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = textToCopy;
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextarea);
+                
+                uiElements.copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    uiElements.copyBtn.textContent = 'Copy Details';
+                }, 2000);
+            });
+
+            // Form submission logic
+            uiElements.bookingForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent the form from submitting normally
+                
+                const passengerName = uiElements.passengerNameInput.value;
+                const phoneNumber = uiElements.phoneNumberInput.value;
+                const pickup = uiElements.pickupLocationInput.value;
+                const destination = uiElements.destinationInput.value;
+
+                if (passengerName && phoneNumber && pickup && destination) {
+                    // Generate random driver info
+                    const driverNames = ["John D.", "Jane C.", "Mike L.", "Sarah T."];
+                    const driverName = driverNames[Math.floor(Math.random() * driverNames.length)];
+                    const vehicleNumber = `ABC-${Math.floor(1000 + Math.random() * 9000)}`;
+                    const rideOtp = Math.floor(1000 + Math.random() * 9000);
+
+                    const message = `Booking Confirmed!\nYour ride with driver ${driverName} in vehicle ${vehicleNumber} is on the way. Your ride OTP is ${rideOtp}. The driver's details have been sent to ${phoneNumber}.`;
+                    
+                    showMessageModal('Ride Booked!', message);
+                    uiElements.bookingForm.reset();
+                } else {
+                    showMessageModal('Error', 'Please fill in all the fields.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

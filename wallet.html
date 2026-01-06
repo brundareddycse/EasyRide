@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* THEME & COLOR VARIABLES */
+        :root { --radius: 0.5rem; }
+        
+        [data-theme='night'] {
+            --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; --card: 222.2 84% 6.9%; --card-foreground: 210 40% 98%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 217.2 32.6% 17.5%; --secondary-foreground: 210 40% 98%; --muted: 217.2 32.6% 17.5%; --muted-foreground: 215 20.2% 65.1%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 346.8 77.2% 49.8%;
+        }
+        [data-theme='day'] {
+            --background: 0 0% 100%; --foreground: 224 71.4% 4.9%; --card: 0 0% 100%; --card-foreground: 224 71.4% 4.9%; --primary: 346.8 77.2% 49.8%; --primary-foreground: 355.7 100% 97.3%; --secondary: 210 40% 96.1%; --secondary-foreground: 224 71.4% 4.9%; --muted: 210 40% 96.1%; --muted-foreground: 215.4 16.3% 46.9%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 346.8 77.2% 49.8%;
+        }
+        [data-theme='afternoon'] {
+            --background: 40 100% 95%; --foreground: 40 10% 20%; --card: 40 100% 100%; --card-foreground: 40 10% 20%; --primary: 35 100% 50%; --primary-foreground: 0 0% 100%; --secondary: 40 20% 90%; --secondary-foreground: 40 10% 20%; --muted: 40 20% 90%; --muted-foreground: 40 15% 50%; --border: 40 20% 85%; --input: 40 20% 90%; --ring: 35 100% 50%;
+        }
+        [data-theme='evening'] {
+            --background: 260 50% 10%; --foreground: 260 50% 95%; --card: 260 50% 12%; --card-foreground: 260 50% 95%; --primary: 320 90% 60%; --primary-foreground: 0 0% 100%; --secondary: 260 50% 18%; --secondary-foreground: 260 50% 95%; --muted: 260 50% 18%; --muted-foreground: 260 30% 60%; --border: 260 50% 25%; --input: 260 50% 18%; --ring: 320 90% 60%;
+        }
+        
+        /* GENERAL STYLING */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+        .container-bg {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+        .card {
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+        }
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+        .btn-secondary {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+        input, select {
+            background-color: hsl(var(--input));
+            border-color: hsl(var(--border));
+            color: hsl(var(--foreground));
+        }
+        input:focus, select:focus {
+            outline: 2px solid hsl(var(--ring));
+        }
+        .text-primary-color {
+            color: hsl(var(--primary));
+        }
+        
+        /* FOOTER & NAVIGATION STYLES */
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: hsl(var(--card));
+            border-top: 1px solid hsl(var(--border));
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            color: hsl(var(--muted-foreground));
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            transition: color 0.2s, background-color 0.2s;
+        }
+        .nav-btn svg {
+            width: 24px;
+            height: 24px;
+            transition: color 0.2s;
+        }
+        .nav-btn.active, .nav-btn:hover {
+            color: hsl(var(--primary));
+            background-color: hsl(var(--secondary));
+        }
+        .nav-btn.active svg, .nav-btn:hover svg {
+            color: hsl(var(--primary));
+        }
+        .nav-btn span {
+            line-height: 1;
+        }
+        
+        /* SOS button specific styles */
+        #sos-btn {
+            color: hsl(var(--primary));
+            font-weight: 600;
+        }
+        #sos-btn svg {
+            color: hsl(var(--primary));
+        }
+
+        /* THEME TOGGLE BUTTON */
+        #theme-toggle-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: hsl(var(--card));
+            color: hsl(var(--foreground));
+            border: 1px solid hsl(var(--border));
+            border-radius: 9999px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #theme-toggle-btn:hover {
+            background-color: hsl(var(--secondary));
+        }
+        #theme-toggle-btn .sun-icon { display: none; }
+        [data-theme='day'] #theme-toggle-btn .moon-icon { display: none; }
+        [data-theme='day'] #theme-toggle-btn .sun-icon { display: inline; }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 150;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: hsl(var(--card));
+            padding: 2.5rem 1.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal.visible .modal-content {
+            transform: translateY(0);
+        }
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            color: hsl(var(--muted-foreground));
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-content h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: hsl(var(--primary));
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        .modal-content p {
+            font-size: 0.9rem;
+            color: hsl(var(--foreground));
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .contact-info a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            text-decoration: none;
+            color: hsl(var(--foreground));
+            background-color: hsl(var(--secondary));
+            margin-bottom: 1rem;
+            transition: background-color 0.2s ease;
+        }
+        .contact-info a:hover {
+            background-color: hsl(var(--muted));
+        }
+        .contact-info a:first-of-type {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+        .contact-info a:first-of-type:hover {
+            background-color: hsl(var(--primary));
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start p-4 pb-20 relative">
+
+    <!-- Theme Toggle Button -->
+    <button id="theme-toggle-btn" aria-label="Toggle theme">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="moon-icon">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"></path>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun-icon">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+    </button>
+    
+    <!-- Main Content Container -->
+    <div class="container-bg w-full max-w-2xl mx-auto rounded-3xl p-6 md:p-10 mt-8">
+        <h1 class="text-3xl md:text-4xl font-extrabold mb-8 text-center">Your Wallet</h1>
+        
+        <!-- Balance Card -->
+        <div class="card rounded-2xl shadow-lg p-6 md:p-8 mb-8 text-center">
+            <h2 class="text-xl md:text-2xl font-bold text-muted-foreground mb-2">Current Balance</h2>
+            <p id="current-balance" class="text-4xl md:text-5xl font-extrabold text-primary-color">₹ 0</p>
+            <p class="text-sm mt-2 text-muted-foreground">This is your secure digital wallet.</p>
+        </div>
+
+        <!-- Add Money Card -->
+        <div class="card rounded-2xl shadow-lg p-6 md:p-8 mb-8">
+            <h2 class="text-2xl font-bold text-primary-color mb-4">Add Money</h2>
+
+            <!-- Payment Methods -->
+            <p class="text-sm text-muted-foreground mb-2">Choose a payment method:</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <button class="flex items-center justify-center btn-secondary py-3 px-2 rounded-xl font-semibold hover:opacity-80 transition-opacity duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M8 12a4 4 0 0 1 8 0"/><path d="M12 8v4"/></svg>
+                    UPI
+                </button>
+                <button class="flex items-center justify-center btn-secondary py-3 px-2 rounded-xl font-semibold hover:opacity-80 transition-opacity duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    Card
+                </button>
+                <button class="flex items-center justify-center btn-secondary py-3 px-2 rounded-xl font-semibold hover:opacity-80 transition-opacity duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Net Banking
+                </button>
+                <button class="flex items-center justify-center btn-secondary py-3 px-2 rounded-xl font-semibold hover:opacity-80 transition-opacity duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    Wallet
+                </button>
+            </div>
+            
+            <p class="text-sm text-muted-foreground mb-2">Or select a preset amount:</p>
+            <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                <button class="flex-1 btn-secondary py-3 rounded-xl font-semibold hover:opacity-80 transition-opacity duration-200" onclick="addMoney(500, 'Preset')">₹ 500</button>
+                <button class="flex-1 btn-secondary py-3 rounded-xl font-semibold hover:opacity-80 transition-opacity duration-200" onclick="addMoney(1000, 'Preset')">₹ 1000</button>
+                <button class="flex-1 btn-secondary py-3 rounded-xl font-semibold hover:opacity-80 transition-opacity duration-200" onclick="addMoney(2000, 'Preset')">₹ 2000</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="amount-input" type="number" placeholder="Enter custom amount" class="flex-1 p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500">
+                <button class="btn-primary py-3 px-6 rounded-xl font-semibold hover:opacity-90 transition-colors duration-200" onclick="addCustomAmount()">Add</button>
+            </div>
+        </div>
+        
+        <!-- Redeem Coupon Card -->
+        <div class="card rounded-2xl shadow-lg p-6 md:p-8 mb-8">
+            <h2 class="text-2xl font-bold text-primary-color mb-4">Redeem Coupon</h2>
+            <div class="flex items-center gap-2">
+                <input id="coupon-input" type="text" placeholder="Enter coupon code" class="flex-1 p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 uppercase">
+                <button class="btn-primary py-3 px-6 rounded-xl font-semibold hover:opacity-90 transition-colors duration-200" onclick="redeemCoupon()">Redeem</button>
+            </div>
+            <p id="coupon-message" class="mt-2 text-sm text-center"></p>
+        </div>
+
+        <!-- Transaction History Card -->
+        <div class="card rounded-2xl shadow-lg p-6 md:p-8">
+            <h2 class="text-2xl font-bold text-primary-color mb-4">Transaction History</h2>
+            <div id="transaction-history" class="space-y-4">
+                <!-- Transaction items will be appended here by JS -->
+                <p class="text-muted-foreground text-center italic">No transactions yet.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer Navigation -->
+    <footer>
+        <a href="booking.html" class="nav-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9.5a2 2 0 0 1 1.7-1h14.6a2 2 0 0 1 1.7 1v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <path d="M11 20v-5a2 2 0 0 1 2-2v0a2 2 0 0 1 2 2v5"/>
+                <path d="m18 10-6-6-6 6"/>
+            </svg>
+            <span>Home</span>
+        </a>
+        <a href="wallet.html" class="nav-btn active">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12H8a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h13"/>
+                <path d="M3 14h.01"/>
+                <path d="M3 10h.01"/>
+                <path d="M3 6h.01"/>
+                <path d="M12 2v.01"/>
+                <path d="M12 22v.01"/>
+                <path d="M21 6v.01"/>
+                <path d="M21 18v.01"/>
+                <path d="M6 12h.01"/>
+                <path d="M18 12h.01"/>
+                <rect x="2" y="7" width="20" height="10" rx="2" ry="2"/>
+            </svg>
+            <span>Wallet</span>
+        </a>
+        <a href="status.html" class="nav-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                <path d="M16 2v4a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V2"></path>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+                <line x1="8" y1="16" x2="16" y2="16"></line>
+            </svg>
+            <span>Status</span>
+        </a>
+        <button id="sos-btn" class="nav-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span>SOS</span>
+        </button>
+    </footer>
+
+    <script>
+        // Global state
+        let balance = 0;
+        let transactions = [];
+        const coupons = {
+            "EASY50": { amount: 50, valid: true },
+            "WELCOME100": { amount: 100, valid: true },
+            "RIDEFREE": { amount: 150, valid: true }
+        };
+
+        // DOM elements
+        const balanceElement = document.getElementById('current-balance');
+        const transactionHistoryElement = document.getElementById('transaction-history');
+        const amountInput = document.getElementById('amount-input');
+        const couponInput = document.getElementById('coupon-input');
+        const couponMessage = document.getElementById('coupon-message');
+
+        // Function to update balance and display
+        function updateBalance(amount, type) {
+            balance += amount;
+            balanceElement.textContent = `₹ ${balance.toFixed(0)}`;
+            
+            const transaction = {
+                id: Date.now(),
+                amount: amount,
+                type: type,
+                date: new Date().toLocaleString()
+            };
+            transactions.unshift(transaction); // Add to the beginning
+            renderTransactions();
+        }
+
+        // Function to render transactions
+        function renderTransactions() {
+            transactionHistoryElement.innerHTML = '';
+            if (transactions.length === 0) {
+                transactionHistoryElement.innerHTML = `<p class="text-muted-foreground text-center italic">No transactions yet.</p>`;
+                return;
+            }
+
+            transactions.forEach(tx => {
+                const isDebit = tx.amount < 0;
+                const sign = isDebit ? '-' : '+';
+                const color = isDebit ? 'text-red-400' : 'text-green-400';
+                
+                let typeText;
+                if (tx.type === 'coupon') {
+                    typeText = 'Coupon Redeemed';
+                } else if (tx.type === 'add') {
+                    typeText = 'Money Added';
+                } else {
+                    typeText = 'Paid for Ride';
+                }
+                
+                const transactionItem = document.createElement('div');
+                transactionItem.classList.add('flex', 'justify-between', 'items-center', 'py-3', 'px-4', 'rounded-lg', 'bg-gray-800');
+                transactionItem.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="font-semibold">${typeText}</span>
+                        <span class="text-xs text-muted-foreground">${tx.date}</span>
+                    </div>
+                    <span class="font-bold text-lg ${color}">${sign}₹ ${Math.abs(tx.amount).toFixed(0)}</span>
+                `;
+                transactionHistoryElement.appendChild(transactionItem);
+            });
+        }
+
+        // Add money button handlers
+        window.addMoney = function(amount, paymentMethod) {
+            updateBalance(amount, 'add', paymentMethod);
+        };
+
+        window.addCustomAmount = function() {
+            const amount = parseFloat(amountInput.value);
+            if (amount > 0) {
+                updateBalance(amount, 'add');
+                amountInput.value = '';
+            }
+        };
+
+        // Redeem coupon function
+        window.redeemCoupon = function() {
+            const code = couponInput.value.toUpperCase();
+            if (coupons[code] && coupons[code].valid) {
+                const couponAmount = coupons[code].amount;
+                updateBalance(couponAmount, 'coupon');
+                coupons[code].valid = false; // Mark as used
+                couponMessage.textContent = `Coupon '${code}' redeemed successfully! ₹${couponAmount} added.`;
+                couponMessage.classList.add('text-green-400');
+                couponMessage.classList.remove('text-red-400');
+                couponInput.value = '';
+            } else {
+                couponMessage.textContent = `Invalid or expired coupon code.`;
+                couponMessage.classList.add('text-red-400');
+                couponMessage.classList.remove('text-green-400');
+            }
+        };
+
+        // Initial render
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'night';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            renderTransactions();
+        });
+
+        // Theme toggle functionality
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const htmlElement = document.documentElement;
+        const themes = ['night', 'day', 'afternoon', 'evening'];
+
+        // Toggle theme on button click
+        themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const currentIndex = themes.indexOf(currentTheme);
+            const nextIndex = (currentIndex + 1) % themes.length;
+            const newTheme = themes[nextIndex];
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // SOS Modal functionality
+        const sosBtn = document.getElementById('sos-btn');
+        if (sosBtn) {
+            sosBtn.addEventListener('click', () => {
+                const modal = document.createElement('div');
+                modal.classList.add('modal', 'visible');
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <span class="close-btn" onclick="this.parentElement.parentElement.classList.remove('visible')">&times;</span>
+                        <h3>Emergency Assistance</h3>
+                        <p>In case of an emergency, you can immediately contact the police or a hospital.</p>
+                        <div class="contact-info">
+                            <a href="tel:100">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2.02 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.08 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                <span>Call Police: 100</span>
+                            </a>
+                            <a href="tel:108">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2.02 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.08 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                <span>Call Ambulance: 108</span>
+                            </a>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            });
+        }
+    </script>
+</body>
+</html>
